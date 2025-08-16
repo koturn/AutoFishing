@@ -1,0 +1,6 @@
+[submodule "Koturn.VRChat.Log"]
+	path = Koturn.VRChat.Log
+	url = https://github.com/koturn/Koturn.VRChat.Log.git
+[submodule "Koturn.Windows.Consoles"]
+	path = Koturn.Windows.Consoles
+	url = https://github.com/koturn/Koturn.Windows.Consoles.git

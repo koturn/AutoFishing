@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net9.0-windows;net481</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <WarningLevel>8</WarningLevel>
+    <UseWPF>true</UseWPF>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <LangVersion>13</LangVersion>
+    <Title>AutoFishing</Title>
+    <Version>1.0.0</Version>
+    <Authors>koturn</Authors>
+    <Company>koturn</Company>
+    <Description>Automation tool for "A Simple Fishing World" in VRChat.</Description>
+    <Copyright>Copyright (C) 2024 koturn All Rights Reserverd.</Copyright>
+    <PackageProjectUrl>https://github.com/koturn/AutoFishing</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/koturn/AutoFishing</RepositoryUrl>
+    <PackageTags>Windows;WPF;VRChat;OSC</PackageTags>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dirkster.NumericUpDownLib" Version="3.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Koturn.VRChat.Log\Koturn.VRChat.Log\Koturn.VRChat.Log.csproj" />
+    <ProjectReference Include="..\Koturn.Windows.Consoles\Koturn.Windows.Consoles\Koturn.Windows.Consoles.csproj" />
+  </ItemGroup>
+
+</Project>

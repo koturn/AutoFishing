@@ -1,0 +1,23 @@
+version: 1.0.0.{build}
+image: Visual Studio 2022
+environment:
+  SOLUTION_NAME: AutoFishing
+init:
+- cmd: '"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"'
+install:
+- cmd: >-
+    git submodule update --init
+
+    nmake restore
+build_script:
+- cmd: >-
+    nmake
+
+    nmake deploy
+
+    nmake deploy-net481
+artifacts:
+- path: $(SOLUTION_NAME)-net9.0.zip
+  name: .NET 9 binary
+- path: $(SOLUTION_NAME)-net481.zip
+  name: .NET Framework 4.8.1 binary
