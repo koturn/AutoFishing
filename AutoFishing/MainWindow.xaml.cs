@@ -111,7 +111,9 @@ namespace AutoFishing
             _labelStatus.Content = "Start";
 
             var client = new UdpClient(AddressFamily.InterNetwork);
-            client.Connect("127.0.0.1", 9000);
+            var host = _textBoxHost.Text;
+            var port = (int)_nudPort.Value;
+            client.Connect(host, port);
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
