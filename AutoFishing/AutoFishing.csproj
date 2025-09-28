@@ -7,6 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <WarningLevel>8</WarningLevel>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <LangVersion>13</LangVersion>
@@ -29,6 +30,10 @@
 
   <ItemGroup>
     <Compile Remove="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
