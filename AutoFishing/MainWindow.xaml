@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:AutoFishing"
         mc:Ignorable="d"
         Title="Auto Fishing" Width="Auto" Height="Auto"
-        SizeToContent="WidthAndHeight" Closing="Window_Closing">
+        SizeToContent="WidthAndHeight" Closing="Window_Closing" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid Margin="6,6,6,6">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -28,15 +28,15 @@
         </Grid.ColumnDefinitions>
 
         <Label Content="Charge time:" Grid.Row="0" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UIntegerUpDown Value="500" MinValue="100" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudChargeTime_ValueChanged"/>
+        <nud:UIntegerUpDown Value="500" MinValue="100" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudChargeTime_ValueChanged"/>
         <Label Content="ms" Grid.Row="0" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Wait timeout:" Grid.Row="1" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UIntegerUpDown Value="90000" MinValue="10000" MaxValue="300000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudWaitTimeout_ValueChanged"/>
+        <nud:UIntegerUpDown Value="90000" MinValue="10000" MaxValue="300000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudWaitTimeout_ValueChanged"/>
         <Label Content="ms" Grid.Row="1" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Roll timeout:" Grid.Row="2" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudRollTimeout_ValueChanged"/>
+        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudRollTimeout_ValueChanged"/>
         <Label Content="ms" Grid.Row="2" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Hot Key:" Grid.Row="3" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
@@ -99,7 +99,7 @@
         <TextBox x:Name="_textBoxHost" Text="127.0.0.1" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Port:" Grid.Row="5" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UShortUpDown x:Name="_nudPort" Value="9000" MinValue="0" MaxValue="65535" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" />
+        <nud:UShortUpDown x:Name="_nudPort" Value="9000" MinValue="0" MaxValue="65535" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" />
 
         <Button x:Name="_buttonStartStop" Content="Start" Grid.Row="6" Grid.Column="0" Margin="3,3,3,3" Click="ButtonToggle_Click"/>
         <Label x:Name="_labelStatus" Content="Stop" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
