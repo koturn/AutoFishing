@@ -43,6 +43,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Koturn.VRChat.Log\Koturn.VRChat.Log\Koturn.VRChat.Log.csproj" />
     <ProjectReference Include="..\Koturn.Windows.Consoles\Koturn.Windows.Consoles\Koturn.Windows.Consoles.csproj" />
+    <ProjectReference Include="..\Koturn.Windows.GlobalHotKeys\Koturn.Windows.GlobalHotKeys\Koturn.Windows.GlobalHotKeys.csproj" />
   </ItemGroup>
 
 </Project>

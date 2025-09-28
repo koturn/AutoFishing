@@ -1,15 +1,16 @@
-#if NET6_0_OR_GREATER
 using System;
-#endif
 using System.Diagnostics;
 using System.Net.Sockets;
 #if !NET6_0_OR_GREATER
 using System.Text;
 #endif  // !NET6_0_OR_GREATER
 using System.Threading;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using NumericUpDownLib;
+using Koturn.Windows.GlobalHotKeys;
 
 
 namespace AutoFishing
@@ -19,6 +20,10 @@ namespace AutoFishing
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Global Hot Key manager.
+        /// </summary>
+        private readonly GlobalHotKeyManager _globalHotKeyManager;
         /// <summary>
         /// Thread for UDP send.
         /// </summary>
@@ -41,7 +46,60 @@ namespace AutoFishing
         /// </summary>
         public MainWindow()
         {
+            var interopHelper = new WindowInteropHelper(this);
+            var hWnd = interopHelper.EnsureHandle();
+            HwndSource.FromHwnd(hWnd).AddHook(new HwndSourceHook(WndProc));
+            _globalHotKeyManager = new GlobalHotKeyManager(hWnd);
+
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Represents the method that handles Win32 window messages.
+        /// </summary>
+        /// <param name="hWnd">The window handle.</param>
+        /// <param name="msg">The message ID.</param>
+        /// <param name="wParam">The message's wParam value.</param>
+        /// <param name="lParam">The message's lParam value.</param>
+        /// <param name="handled">A value that indicates whether the message was handled.
+        /// Set the value to true if the message was handled; otherwise, false.</param>
+        /// <returns>The appropriate return value depends on the particular message.
+        /// See the message documentation details for the Win32 message being handled.</returns>
+        private IntPtr WndProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == GlobalHotKeyManager.MessageId)
+            {
+                var hotKeyId = (int)wParam;
+                foreach (var id in _globalHotKeyManager.RegisteredIds)
+                {
+                    if (hotKeyId == id)
+                    {
+                        ToggleStartStop(_buttonStartStop);
+                        handled = true;
+                        break;
+                    }
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Toggle start/stop the thread.
+        /// </summary>
+        /// <param name="button"><see cref="_buttonStartStop"/></param>
+        private void ToggleStartStop(Button button)
+        {
+            if ((string)button.Content == "Start")
+            {
+                button.Content = "Stop";
+                StartAutoFishing();
+            }
+            else
+            {
+                button.Content = "Start";
+                StopAutoFishing();
+            }
         }
 
         /// <summary>
@@ -181,24 +239,90 @@ namespace AutoFishing
         }
 
         /// <summary>
+        /// Update hot key.
+        /// </summary>
+        private void UpdateHotKey()
+        {
+            if ((_comboBoxHotKey.SelectedItem as ComboBoxItem)?.Content is not string text || text.Length == 0)
+            {
+                return;
+            }
+
+            var key = default(Keys);
+            if (text.Length == 1 && char.IsDigit(text[0]))
+            {
+                // Digit key.
+#if NETCOREAPP3_0_OR_GREATER
+                key = Enum.Parse<Keys>("D" + text[0]);
+#else
+                key = (Keys)Enum.Parse(typeof(Keys), "D" + text[0]);
+#endif  // NETCOREAPP3_0_OR_GREATER
+            }
+            else
+            {
+                // Alphabet key or Function key.
+#if NETCOREAPP3_0_OR_GREATER
+                key = Enum.Parse<Keys>(text);
+#else
+                key = (Keys)Enum.Parse(typeof(Keys), text);
+#endif  // NETCOREAPP3_0_OR_GREATER
+            }
+            var modKey = GetModifilerKeys();
+
+            try
+            {
+                _globalHotKeyManager.UnregisterAll();
+                _globalHotKeyManager.Register(modKey, key);
+                ConsoleEx.Log($"Re-Register Hot Key: [{modKey}][{key}]");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, ex.GetType().Name, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Get modifier key value from <see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> and <see cref="_checkBoxAlt"/>.
+        /// </summary>
+        /// <returns>Modifier key value.</returns>
+        private ModifierKeys GetModifilerKeys()
+        {
+            var modKey = ModifierKeys.None;
+            if (_checkBoxShift.IsChecked.GetValueOrDefault())
+            {
+                modKey |= ModifierKeys.Shift;
+            }
+            if (_checkBoxCtrl.IsChecked.GetValueOrDefault())
+            {
+                modKey |= ModifierKeys.Control;
+            }
+            if (_checkBoxAlt.IsChecked.GetValueOrDefault())
+            {
+                modKey |= ModifierKeys.Alt;
+            }
+            return modKey;
+        }
+
+        /// <summary>
+        /// <para>Called before main window closing.</para>
+        /// <para>Ensure to stop <see cref="_thread"/>.</para>
+        /// </summary>
+        /// <param name="sender">`this` (Instance of the <see cref="MainWindow"/>).</param>
+        /// <param name="e">Provides data for a cancelable event.</param>
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            _globalHotKeyManager.Dispose();
+            StopAutoFishing();
+        }
+
+        /// <summary>
         /// Start or stop auto fishing.
         /// </summary>
         /// <param name="sender">Start/Stop toggle button.</param>
         /// <param name="e">Contains state information and event data associated with a routed event.</param>
         private void ButtonToggle_Click(object sender, RoutedEventArgs e)
         {
-            var button = (Button)sender;
-
-            if ((string)button.Content == "Start")
-            {
-                button.Content = "Stop";
-                StartAutoFishing();
-            }
-            else
-            {
-                button.Content = "Start";
-                StopAutoFishing();
-            }
+            ToggleStartStop((Button)sender);
         }
 
         /// <summary>
@@ -231,6 +355,39 @@ namespace AutoFishing
             _rollTimeout = (int)((UIntegerUpDown)sender).Value;
         }
 
+        /// <summary>
+        /// <para>Called when <see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> or <see cref="_checkBoxAlt"/> is checked.</para>
+        /// <para>Re-register hot key.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> or <see cref="_checkBoxAlt"/>.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxModifierKey_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateHotKey();
+        }
+
+        /// <summary>
+        /// <para>Called when <see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> or <see cref="_checkBoxAlt"/> is checked.</para>
+        /// <para>Re-register hot key.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> or <see cref="_checkBoxAlt"/>.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxModifierKey_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateHotKey();
+        }
+
+        /// <summary>
+        /// <para>Called when <see cref="_checkBoxShift"/>, <see cref="_checkBoxCtrl"/> or <see cref="_checkBoxAlt"/> is unchecked.</para>
+        /// <para>Re-register hot key.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_comboBoxHotKey"/></param>
+        /// <param name="e">Provides data for the <see cref="SelectionChangedEventHandler"/> event.</param>
+        private void ComboBoxHotKey_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateHotKey();
+        }
+
 #if NET6_0_OR_GREATER
         /// <summary>
         /// Send data to <see cref="UdpClient"/>.
@@ -241,7 +398,6 @@ namespace AutoFishing
         {
             client.Send(data);
         }
-
 #else
         /// <summary>
         /// Send data to <see cref="UdpClient"/>.

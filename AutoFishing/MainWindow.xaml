@@ -7,9 +7,10 @@
         xmlns:local="clr-namespace:AutoFishing"
         mc:Ignorable="d"
         Title="Auto Fishing" Width="Auto" Height="Auto"
-        SizeToContent="WidthAndHeight">
+        SizeToContent="WidthAndHeight" Closing="Window_Closing">
     <Grid Margin="6,6,6,6">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -17,23 +18,82 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="AUto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
         <Label Content="Charge time:" Grid.Row="0" Grid.Column="0" Margin="0,3,3,0" VerticalAlignment="Center"/>
-        <nud:UIntegerUpDown Value="500" MinValue="100" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="0" Grid.Column="1" Margin="0,3,3,0" ValueChanged="NudChargeTime_ValueChanged"/>
-        <Label Content="ms" Grid.Row="0" Grid.Column="2" Margin="0,3,3,0" VerticalAlignment="Center"/>
+        <nud:UIntegerUpDown Value="500" MinValue="100" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Margin="0,3,3,0" ValueChanged="NudChargeTime_ValueChanged"/>
+        <Label Content="ms" Grid.Row="0" Grid.Column="5" Margin="0,3,3,0" VerticalAlignment="Center"/>
 
         <Label Content="Wait timeout:" Grid.Row="1" Grid.Column="0" Margin="0,3,3,0" VerticalAlignment="Center"/>
-        <nud:UIntegerUpDown Value="90000" MinValue="10000" MaxValue="300000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="1" Grid.Column="1" Margin="0,3,3,0" ValueChanged="NudWaitTimeout_ValueChanged"/>
-        <Label Content="ms" Grid.Row="1" Grid.Column="2" Margin="0,3,3,0" VerticalAlignment="Center"/>
+        <nud:UIntegerUpDown Value="90000" MinValue="10000" MaxValue="300000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="0,3,3,0" ValueChanged="NudWaitTimeout_ValueChanged"/>
+        <Label Content="ms" Grid.Row="1" Grid.Column="5" Margin="0,3,3,0" VerticalAlignment="Center"/>
 
         <Label Content="Roll timeout:" Grid.Row="2" Grid.Column="0" Margin="0,3,3,0" VerticalAlignment="Center"/>
-        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="2" Grid.Column="1" Margin="0,3,3,0" ValueChanged="NudRollTimeout_ValueChanged"/>
-        <Label Content="ms" Grid.Row="2" Grid.Column="2" Margin="0,3,3,0" VerticalAlignment="Center"/>
+        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="0,3,3,0" ValueChanged="NudRollTimeout_ValueChanged"/>
+        <Label Content="ms" Grid.Row="2" Grid.Column="5" Margin="0,3,3,0" VerticalAlignment="Center"/>
 
-        <Button Content="Start" Grid.Row="3" Grid.Column="0" Click="ButtonToggle_Click"/>
-        <Label x:Name="_labelStatus" Content="Stop" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Center"/>
+        <Label Content="Hot Key:" Grid.Row="3" Grid.Column="0" Margin="0,3,3,0" VerticalAlignment="Center"/>
+        <CheckBox x:Name="_checkBoxShift" Content="Shift" Grid.Row="3" Grid.Column="1" Margin="0,3,3,0" VerticalAlignment="Center" Checked="CheckBoxModifierKey_Checked" Unchecked="CheckBoxModifierKey_Unchecked"/>
+        <CheckBox x:Name="_checkBoxCtrl" Content="Ctrl" Grid.Row="3" Grid.Column="2" Margin="0,3,3,0" VerticalAlignment="Center" Checked="CheckBoxModifierKey_Checked" Unchecked="CheckBoxModifierKey_Unchecked"/>
+        <CheckBox x:Name="_checkBoxAlt" Content="Alt" Grid.Row="3" Grid.Column="3" Margin="0,3,3,0" VerticalAlignment="Center" Checked="CheckBoxModifierKey_Checked" Unchecked="CheckBoxModifierKey_Unchecked"/>
+        <ComboBox x:Name="_comboBoxHotKey" SelectedIndex="47" Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="2" Margin="3,3,3,3" VerticalAlignment="Center" SelectionChanged="ComboBoxHotKey_SelectionChanged">
+            <ComboBoxItem>0</ComboBoxItem>
+            <ComboBoxItem>1</ComboBoxItem>
+            <ComboBoxItem>2</ComboBoxItem>
+            <ComboBoxItem>3</ComboBoxItem>
+            <ComboBoxItem>4</ComboBoxItem>
+            <ComboBoxItem>5</ComboBoxItem>
+            <ComboBoxItem>6</ComboBoxItem>
+            <ComboBoxItem>7</ComboBoxItem>
+            <ComboBoxItem>8</ComboBoxItem>
+            <ComboBoxItem>9</ComboBoxItem>
+            <ComboBoxItem>A</ComboBoxItem>
+            <ComboBoxItem>B</ComboBoxItem>
+            <ComboBoxItem>C</ComboBoxItem>
+            <ComboBoxItem>D</ComboBoxItem>
+            <ComboBoxItem>E</ComboBoxItem>
+            <ComboBoxItem>F</ComboBoxItem>
+            <ComboBoxItem>G</ComboBoxItem>
+            <ComboBoxItem>H</ComboBoxItem>
+            <ComboBoxItem>I</ComboBoxItem>
+            <ComboBoxItem>J</ComboBoxItem>
+            <ComboBoxItem>K</ComboBoxItem>
+            <ComboBoxItem>L</ComboBoxItem>
+            <ComboBoxItem>M</ComboBoxItem>
+            <ComboBoxItem>N</ComboBoxItem>
+            <ComboBoxItem>O</ComboBoxItem>
+            <ComboBoxItem>P</ComboBoxItem>
+            <ComboBoxItem>Q</ComboBoxItem>
+            <ComboBoxItem>R</ComboBoxItem>
+            <ComboBoxItem>S</ComboBoxItem>
+            <ComboBoxItem>T</ComboBoxItem>
+            <ComboBoxItem>U</ComboBoxItem>
+            <ComboBoxItem>V</ComboBoxItem>
+            <ComboBoxItem>W</ComboBoxItem>
+            <ComboBoxItem>X</ComboBoxItem>
+            <ComboBoxItem>Y</ComboBoxItem>
+            <ComboBoxItem>Z</ComboBoxItem>
+            <ComboBoxItem>F0</ComboBoxItem>
+            <ComboBoxItem>F1</ComboBoxItem>
+            <ComboBoxItem>F2</ComboBoxItem>
+            <ComboBoxItem>F3</ComboBoxItem>
+            <ComboBoxItem>F4</ComboBoxItem>
+            <ComboBoxItem>F5</ComboBoxItem>
+            <ComboBoxItem>F6</ComboBoxItem>
+            <ComboBoxItem>F7</ComboBoxItem>
+            <ComboBoxItem>F8</ComboBoxItem>
+            <ComboBoxItem>F9</ComboBoxItem>
+            <ComboBoxItem>F10</ComboBoxItem>
+            <ComboBoxItem>F11</ComboBoxItem>
+            <ComboBoxItem>F12</ComboBoxItem>
+        </ComboBox>
+
+        <Button x:Name="_buttonStartStop" Content="Start" Grid.Row="4" Grid.Column="0" Click="ButtonToggle_Click"/>
+        <Label x:Name="_labelStatus" Content="Stop" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5" VerticalAlignment="Center"/>
     </Grid>
 </Window>
