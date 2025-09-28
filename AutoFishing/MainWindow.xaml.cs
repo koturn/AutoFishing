@@ -67,10 +67,21 @@ namespace AutoFishing
                 var sw = new Stopwatch();
 
                 int saveDetectedCount = 0;
+                bool isPickuped = false;
                 using (var saveLogWatcher = new SaveLogWatcher())
                 {
                     saveLogWatcher.Start();
-                    saveLogWatcher.DataSaved += (_, _) => Interlocked.Increment(ref saveDetectedCount);
+                    saveLogWatcher.DataSaved += (_, _) =>
+                    {
+                        Interlocked.Increment(ref saveDetectedCount);
+                        ConsoleEx.Log($"Saved; saveDetectedCount=[{saveDetectedCount}]");
+                    };
+                    saveLogWatcher.FishPickuped += (_, _) =>
+                    {
+                        Interlocked.Exchange(ref saveDetectedCount, -2);
+                        isPickuped = true;
+                        ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{saveDetectedCount}]");
+                    };
                     try
                     {
                         const int watchCycle = 32;
@@ -86,20 +97,23 @@ namespace AutoFishing
                             _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
                             SendData(updClient, releaseData);
                             sw.Restart();
-                            Interlocked.Exchange(ref saveDetectedCount, 0);
+                            isPickuped = false;
+
+                            var isTimeout = true;
                             do
                             {
                                 Thread.Sleep(watchCycle);
 
                                 if (saveDetectedCount > 0)
                                 {
-                                    ConsoleEx.Log("Hit!");
+                                    ConsoleEx.Log($"Hit!");
+                                    isTimeout = false;
                                     break;
                                 }
                             }
                             while (sw.ElapsedMilliseconds < _waitTimeout);
 
-                            if (saveDetectedCount == 0)
+                            if (isTimeout)
                             {
                                 ConsoleEx.Log("Wait timeout");
                             }
@@ -108,19 +122,21 @@ namespace AutoFishing
                             _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
                             SendData(updClient, pressData);
                             sw.Restart();
+                            isTimeout = true;
                             do
                             {
                                 Thread.Sleep(watchCycle);
-                                if (saveDetectedCount > 2)
+                                if (isPickuped && saveDetectedCount > -2)
                                 {
                                     ConsoleEx.Log("Put into bucket");
+                                    isTimeout = false;
                                     Thread.Sleep(100);
                                     break;
                                 }
                             }
                             while (sw.ElapsedMilliseconds < _rollTimeout);
 
-                            if (saveDetectedCount <= 2)
+                            if (isTimeout)
                             {
                                 ConsoleEx.Log("Roll timeout");
                             }

@@ -15,6 +15,10 @@ namespace AutoFishing
         /// Occurs when detect SAVE log.
         /// </summary>
         public event EventHandler<EventArgs>? DataSaved;
+        /// <summary>
+        /// Occurs when fish pickuped.
+        /// </summary>
+        public event EventHandler<EventArgs>? FishPickuped;
 
         /// <summary>
         /// Create an instance of <see cref="VRCBaseLogParser"/>.
@@ -45,9 +49,14 @@ namespace AutoFishing
             /// <returns>True if any of the log parsing defined in this class succeeds, otherwise false.</returns>
             protected override bool OnLogDetected(VRCLogLevel level, List<string> logLines)
             {
-                if (logLines[0] == "SAVED DATA")
+                var line = logLines[0];
+                if (line == "SAVED DATA")
                 {
                     watcher.DataSaved?.Invoke(this, EventArgs.Empty);
+                }
+                else if (line == "Fish Pickup attached to rod Toggles(True)")
+                {
+                    watcher.FishPickuped?.Invoke(this, EventArgs.Empty);
                 }
 
                 return true;
