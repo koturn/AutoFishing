@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using System.Windows.Media;
 using NumericUpDownLib;
 using Koturn.Windows.GlobalHotKeys;
 
@@ -93,11 +94,15 @@ namespace AutoFishing
             if ((string)button.Content == "Start")
             {
                 button.Content = "Stop";
+                _labelStatus.Foreground = new SolidColorBrush(Colors.Red);
+                Topmost = true;
                 StartAutoFishing();
             }
             else
             {
                 button.Content = "Start";
+                _labelStatus.Foreground = new SolidColorBrush(Colors.Black);
+                Topmost = false;
                 StopAutoFishing();
             }
         }
