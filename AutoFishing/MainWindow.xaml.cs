@@ -208,6 +208,7 @@ namespace AutoFishing
                             if (isTimeout)
                             {
                                 ConsoleEx.Log("Roll timeout");
+                                Interlocked.Exchange(ref saveDetectedCount, 0);
                             }
 
                             SendData(updClient, releaseData);
