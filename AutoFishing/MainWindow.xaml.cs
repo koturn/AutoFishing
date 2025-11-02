@@ -94,6 +94,8 @@ namespace AutoFishing
             if ((string)button.Content == "Start")
             {
                 button.Content = "Stop";
+                _textBoxHost.IsEnabled = false;
+                _nudPort.IsEnabled = false;
                 _labelStatus.Foreground = new SolidColorBrush(Colors.Red);
                 Topmost = true;
                 StartAutoFishing();
@@ -101,6 +103,8 @@ namespace AutoFishing
             else
             {
                 button.Content = "Start";
+                _textBoxHost.IsEnabled = true;
+                _nudPort.IsEnabled = true;
                 _labelStatus.Foreground = new SolidColorBrush(Colors.Black);
                 Topmost = false;
                 StopAutoFishing();
