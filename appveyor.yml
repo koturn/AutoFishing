@@ -13,7 +13,7 @@ build_script:
 - cmd: >-
     nmake
 
-    nmake deploy
+    nmake deploy-net9.0
 
     nmake deploy-net481
 artifacts:

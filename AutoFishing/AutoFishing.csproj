@@ -2,15 +2,16 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net9.0-windows;net481</TargetFrameworks>
+    <TargetFrameworks>net10.0-windows;net9.0-windows;net481</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <WarningLevel>8</WarningLevel>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <LangVersion>13</LangVersion>
+    <LangVersion>14</LangVersion>
     <Title>AutoFishing</Title>
     <Version>1.0.0</Version>
     <Authors>koturn</Authors>
