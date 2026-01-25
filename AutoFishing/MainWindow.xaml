@@ -17,6 +17,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -103,5 +104,8 @@
 
         <Button x:Name="_buttonStartStop" Content="Start" Grid.Row="6" Grid.Column="0" Margin="3,3,3,3" Click="ButtonToggle_Click"/>
         <Label x:Name="_labelStatus" Content="Stop" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+
+        <Label Content="Current World:" Grid.Row="7" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label x:Name="_labelCurrentWorld" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
     </Grid>
 </Window>

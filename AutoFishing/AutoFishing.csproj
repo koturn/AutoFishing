@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net10.0-windows;net9.0-windows;net481</TargetFrameworks>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <WarningLevel>8</WarningLevel>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>AutoFishing.ico</ApplicationIcon>
