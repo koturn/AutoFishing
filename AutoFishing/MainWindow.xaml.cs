@@ -529,6 +529,17 @@ namespace AutoFishing
         }
 
         /// <summary>
+        /// <para>This method is called when the value of <see cref="_nudWatchCycle"/> is changed.</para>
+        /// <para>Change watcing cycle of the log files.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_nudWatchCycle"/></param>
+        /// <param name="e">An object that contains the old value and new value.</param>
+        private void NudWatchCycle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<ushort> e)
+        {
+            _logWatcher.WatchCycle = (int)e.NewValue;
+        }
+
+        /// <summary>
         /// <para>This method is called when a log that you joined to instance is detected.</para>
         /// <para>Update the world name label.</para>
         /// </summary>
