@@ -19,6 +19,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -103,14 +104,18 @@
         <Label Content="Port:" Grid.Row="5" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
         <nud:UShortUpDown x:Name="_nudPort" Value="9000" MinValue="0" MaxValue="65535" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" />
 
-        <Label Content="Log Watch Cycle" Grid.Row="6" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UShortUpDown x:Name="_nudWatchCycle" Value="1000" MinValue="500" MaxValue="2000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" ValueChanged="NudWatchCycle_ValueChanged" />
-        <Label Content="ms" Grid.Row="6" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label Content="Input interval" Grid.Row="6" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <nud:UShortUpDown x:Name="_nudInputInterval" Value="33" MinValue="16" MaxValue="200" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" ValueChanged="NudInputInterval_ValueChanged"/>
+        <Label Content="ms" Grid.Row="6" Grid.Column="6" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
-        <Button x:Name="_buttonStartStop" Content="Start" Grid.Row="7" Grid.Column="0" Margin="3,3,3,3" Click="ButtonToggle_Click"/>
-        <Label x:Name="_labelStatus" Content="Stop" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label Content="Log Watch Cycle" Grid.Row="7" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <nud:UShortUpDown x:Name="_nudWatchCycle" Value="1000" MinValue="500" MaxValue="2000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" ValueChanged="NudWatchCycle_ValueChanged" />
+        <Label Content="ms" Grid.Row="7" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
-        <Label Content="Current World:" Grid.Row="8" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <Label x:Name="_labelCurrentWorld" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Button x:Name="_buttonStartStop" Content="Start" Grid.Row="8" Grid.Column="0" Margin="3,3,3,3" Click="ButtonToggle_Click"/>
+        <Label x:Name="_labelStatus" Content="Stop" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+
+        <Label Content="Current World:" Grid.Row="9" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label x:Name="_labelCurrentWorld" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
     </Grid>
 </Window>

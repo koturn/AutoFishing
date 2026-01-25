@@ -52,6 +52,10 @@ namespace AutoFishing
         /// Timeout for waiting (milliseconds).
         /// </summary>
         private int _waitTimeout = 0;
+        /// <summary>
+        /// Minimal input interval (milliseconds).
+        /// </summary>
+        private int _minimalInputInterval = 33;
 
         /// <summary>
         /// Initialize component.
@@ -226,7 +230,7 @@ namespace AutoFishing
                         if (mrePickup.WaitOne(_rollTimeout))
                         {
                             ConsoleEx.Log("Put into bucket");
-                            Thread.Sleep(100);  // Wait for put into bucket.
+                            Thread.Sleep(_minimalInputInterval);  // Wait for put into bucket.
                         }
                         else
                         {
@@ -238,7 +242,7 @@ namespace AutoFishing
                         // Unhold for next hold.
                         //
                         updClient.Send(ReleaseData, ReleaseData.Length);
-                        Thread.Sleep(100);
+                        Thread.Sleep(_minimalInputInterval);
                     }
                 }
                 catch (ThreadInterruptedException)
@@ -319,7 +323,7 @@ namespace AutoFishing
                         // Unhold for next hold.
                         //
                         updClient.Send(ReleaseData, ReleaseData.Length);
-                        Thread.Sleep(100);
+                        Thread.Sleep(_minimalInputInterval);
 
                         //
                         // Hold to collect cached fish.
@@ -333,7 +337,7 @@ namespace AutoFishing
                         // Unhold for next hold.
                         //
                         updClient.Send(ReleaseData, ReleaseData.Length);
-                        Thread.Sleep(100);
+                        Thread.Sleep(_minimalInputInterval);
                     }
                 }
                 catch (ThreadInterruptedException)
@@ -526,6 +530,17 @@ namespace AutoFishing
         private void ComboBoxHotKey_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateHotKey();
+        }
+
+        /// <summary>
+        /// <para>This method is called when the value of <see cref="_nudInputInterval"/> is changed.</para>
+        /// <para>Change minimal input interval.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_nudInputInterval"/></param>
+        /// <param name="e">An object that contains the old value and new value.</param>
+        private void NudInputInterval_ValueChanged(object sender, RoutedPropertyChangedEventArgs<ushort> e)
+        {
+            _minimalInputInterval = (int)e.NewValue;
         }
 
         /// <summary>
