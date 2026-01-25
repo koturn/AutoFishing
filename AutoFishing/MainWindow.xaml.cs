@@ -76,7 +76,7 @@ namespace AutoFishing
         /// Set the value to true if the message was handled; otherwise, false.</param>
         /// <returns>The appropriate return value depends on the particular message.
         /// See the message documentation details for the Win32 message being handled.</returns>
-        private IntPtr WndProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        private nint WndProc(nint hWnd, int msg, nint wParam, nint lParam, ref bool handled)
         {
             if (msg == GlobalHotKeyManager.MessageId)
             {
@@ -92,7 +92,7 @@ namespace AutoFishing
                 }
             }
 
-            return IntPtr.Zero;
+            return default;
         }
 
         /// <summary>
