@@ -1,9 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Sockets;
-#if !NET6_0_OR_GREATER
 using System.Text;
-#endif  // !NET6_0_OR_GREATER
 using System.Threading;
 using System.ComponentModel;
 using System.Windows;
@@ -22,6 +20,15 @@ namespace AutoFishing
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// OSC data byte sequence of press trigger on the right hand.
+        /// </summary>
+        private static readonly byte[] PressData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01");
+        /// <summary>
+        /// OSC data byte sequence of release trigger on the right hand.
+        /// </summary>
+        private static readonly byte[] ReleaseData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00");
+
         /// <summary>
         /// Customized VRChat log watcher.
         /// </summary>
@@ -162,13 +169,6 @@ namespace AutoFishing
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
-#if NET6_0_OR_GREATER
-                var pressData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01"u8;
-                var releaseData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00"u8;
-#else
-                var pressData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01");
-                var releaseData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00");
-#endif  // NET6_0_OR_GREATER
                 var sw = new Stopwatch();
 
                 int saveDetectedCount = 0;
@@ -195,12 +195,12 @@ namespace AutoFishing
                     {
                         ConsoleEx.Log($"Charge ...; [{_chargeTime}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
-                        SendData(updClient, pressData);
+                        updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(_chargeTime);
 
                         ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
-                        SendData(updClient, releaseData);
+                        updClient.Send(ReleaseData, ReleaseData.Length);
                         sw.Restart();
                         isPickuped = false;
 
@@ -225,7 +225,7 @@ namespace AutoFishing
 
                         ConsoleEx.Log($"Roll; Timeout=[{_rollTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
-                        SendData(updClient, pressData);
+                        updClient.Send(PressData, PressData.Length);
                         sw.Restart();
                         isTimeout = true;
                         do
@@ -247,7 +247,7 @@ namespace AutoFishing
                             Interlocked.Exchange(ref saveDetectedCount, 0);
                         }
 
-                        SendData(updClient, releaseData);
+                        updClient.Send(ReleaseData, ReleaseData.Length);
                         Thread.Sleep(100);
                     }
                 }
@@ -259,7 +259,7 @@ namespace AutoFishing
                 {
                     _logWatcher.DataSaved -= dataSaved;
                     _logWatcher.FishPickuped -= fishPickuped;
-                    SendData(updClient, releaseData);
+                    updClient.Send(ReleaseData, ReleaseData.Length);
                     client.Dispose();
                 }
             })
@@ -280,13 +280,6 @@ namespace AutoFishing
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
-#if NET6_0_OR_GREATER
-                var pressData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01"u8;
-                var releaseData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00"u8;
-#else
-                var pressData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01");
-                var releaseData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00");
-#endif  // NET6_0_OR_GREATER
                 var sw = new Stopwatch();
 
                 int saveDetectedCount = 0;
@@ -309,12 +302,13 @@ namespace AutoFishing
 
                         ConsoleEx.Log($"Charge ...; [{chargeTime}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
-                        SendData(updClient, pressData);
+                        updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(chargeTime);
 
                         ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
-                        SendData(updClient, releaseData);
+                        updClient.Send(ReleaseData, ReleaseData.Length);
+
                         sw.Restart();
 
                         var isTimeout = true;
@@ -338,18 +332,19 @@ namespace AutoFishing
 
                         ConsoleEx.Log($"Roll; [{chargeTime * 3}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
-                        SendData(updClient, pressData);
+                        updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(chargeTime * 3);
 
-                        SendData(updClient, releaseData);
+                        updClient.Send(ReleaseData, ReleaseData.Length);
+
                         Thread.Sleep(100);
 
                         ConsoleEx.Log($"Collect; [{1500}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Collect");
-                        SendData(updClient, pressData);
+                        updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(1000);
 
-                        SendData(updClient, releaseData);
+                        updClient.Send(ReleaseData, ReleaseData.Length);
                         Thread.Sleep(100);
                     }
                 }
@@ -360,7 +355,7 @@ namespace AutoFishing
                 finally
                 {
                     _logWatcher.ReelingStarted -= reelingStarted;
-                    SendData(updClient, releaseData);
+                    updClient.Send(ReleaseData, ReleaseData.Length);
                     client.Dispose();
                 }
             })
@@ -576,27 +571,5 @@ namespace AutoFishing
                 StopAutoFishing();
             });
         }
-
-#if NET6_0_OR_GREATER
-        /// <summary>
-        /// Send data to <see cref="UdpClient"/>.
-        /// </summary>
-        /// <param name="client">A <see cref="UdpClient"/>.</param>
-        /// <param name="data">A <see cref="byte"/> data to send.</param>
-        private static void SendData(UdpClient client, ReadOnlySpan<byte> data)
-        {
-            client.Send(data);
-        }
-#else
-        /// <summary>
-        /// Send data to <see cref="UdpClient"/>.
-        /// </summary>
-        /// <param name="client">A <see cref="UdpClient"/>.</param>
-        /// <param name="data">A <see cref="byte"/> data to send.</param>
-        private static void SendData(UdpClient client, byte[] data)
-        {
-            client.Send(data, data.Length);
-        }
-#endif  // NET6_0_OR_GREATER
     }
 }
