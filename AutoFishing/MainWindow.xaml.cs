@@ -12,6 +12,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using NumericUpDownLib;
 using Koturn.Windows.GlobalHotKeys;
+using Koturn.VRChat.Log.Events;
 
 
 namespace AutoFishing
@@ -21,6 +22,10 @@ namespace AutoFishing
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Customized VRChat log watcher.
+        /// </summary>
+        private readonly FishingLogWatcher _logWatcher = new();
         /// <summary>
         /// Global Hot Key manager.
         /// </summary>
@@ -53,7 +58,12 @@ namespace AutoFishing
             _globalHotKeyManager = new GlobalHotKeyManager(hWnd);
 
             InitializeComponent();
+
+            _logWatcher.JoinedToInstance += LogWatcher_JoinedToInstance;
+            _logWatcher.Start();
+            _logWatcher.LeftFromInstance += LogWatcher_LeftFromInstance;
         }
+
 
         /// <summary>
         /// Represents the method that handles Win32 window messages.
@@ -93,20 +103,10 @@ namespace AutoFishing
         {
             if ((string)button.Content == "Start")
             {
-                button.Content = "Stop";
-                _textBoxHost.IsEnabled = false;
-                _nudPort.IsEnabled = false;
-                _labelStatus.Foreground = new SolidColorBrush(Colors.Red);
-                Topmost = true;
                 StartAutoFishing();
             }
             else
             {
-                button.Content = "Start";
-                _textBoxHost.IsEnabled = true;
-                _nudPort.IsEnabled = true;
-                _labelStatus.Foreground = new SolidColorBrush(Colors.Black);
-                Topmost = false;
                 StopAutoFishing();
             }
         }
@@ -116,13 +116,49 @@ namespace AutoFishing
         /// </summary>
         private void StartAutoFishing()
         {
+            var worldId = _logWatcher?.InstanceInfo?.WorldId;
+            if (worldId == null)
+            {
+                ConsoleEx.Log("Failed to identify current world");
+                return;
+            }
+            if (worldId != WorldIds.SimpleFishingWorld && worldId != WorldIds.IdleFishing)
+            {
+                ConsoleEx.Log("Current world is not neither \"A Simple Fishing World\" nor \"Idle Fishing\"");
+                return;
+            }
+
             ConsoleEx.Log("Start auto fishing");
+
+            _buttonStartStop.Content = "Stop";
+            _textBoxHost.IsEnabled = false;
+            _nudPort.IsEnabled = false;
+            _labelStatus.Foreground = new SolidColorBrush(Colors.Red);
             _labelStatus.Content = "Start";
+            Topmost = true;
 
             var client = new UdpClient(AddressFamily.InterNetwork);
             var host = _textBoxHost.Text;
             var port = (int)_nudPort.Value;
             client.Connect(host, port);
+
+            if (worldId == WorldIds.SimpleFishingWorld)
+            {
+                _thread = StartSimpleFishingWorldThread(client);
+            }
+            else
+            {
+                _thread = StartIdleFishingThread(client);
+            }
+        }
+
+        /// <summary>
+        /// Start new auto operation <see cref="Thread"/> for "A Simple Fishing World".
+        /// </summary>
+        /// <param name="client"><see cref="UdpClient"/> for OSC.</param>
+        /// <returns>Created and started <see cref="Thread"/>.</returns>
+        private Thread StartSimpleFishingWorldThread(UdpClient client)
+        {
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
@@ -137,100 +173,202 @@ namespace AutoFishing
 
                 int saveDetectedCount = 0;
                 bool isPickuped = false;
-                using (var saveLogWatcher = new SaveLogWatcher())
+
+                var dataSaved = new EventHandler((_, _) =>
                 {
-                    saveLogWatcher.Start();
-                    saveLogWatcher.DataSaved += (_, _) =>
+                    Interlocked.Increment(ref saveDetectedCount);
+                    ConsoleEx.Log($"Saved; saveDetectedCount=[{saveDetectedCount}]");
+                });
+                var fishPickuped = new EventHandler((_, _) =>
+                {
+                    Interlocked.Exchange(ref saveDetectedCount, -2);
+                    isPickuped = true;
+                    ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{saveDetectedCount}]");
+                });
+                _logWatcher.DataSaved += dataSaved;
+                _logWatcher.FishPickuped += fishPickuped;
+                try
+                {
+                    const int watchCycle = 32;
+
+                    while (true)
                     {
-                        Interlocked.Increment(ref saveDetectedCount);
-                        ConsoleEx.Log($"Saved; saveDetectedCount=[{saveDetectedCount}]");
-                    };
-                    saveLogWatcher.FishPickuped += (_, _) =>
-                    {
-                        Interlocked.Exchange(ref saveDetectedCount, -2);
-                        isPickuped = true;
-                        ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{saveDetectedCount}]");
-                    };
-                    try
-                    {
-                        const int watchCycle = 32;
+                        ConsoleEx.Log($"Charge ...; [{_chargeTime}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
+                        SendData(updClient, pressData);
+                        Thread.Sleep(_chargeTime);
 
-                        while (true)
-                        {
-                            ConsoleEx.Log($"Charge ...; [{_chargeTime}] ms");
-                            _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
-                            SendData(updClient, pressData);
-                            Thread.Sleep(_chargeTime);
-
-                            ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
-                            _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
-                            SendData(updClient, releaseData);
-                            sw.Restart();
-                            isPickuped = false;
-
-                            var isTimeout = true;
-                            do
-                            {
-                                Thread.Sleep(watchCycle);
-
-                                if (saveDetectedCount > 0)
-                                {
-                                    ConsoleEx.Log($"Hit!");
-                                    isTimeout = false;
-                                    break;
-                                }
-                            }
-                            while (sw.ElapsedMilliseconds < _waitTimeout);
-
-                            if (isTimeout)
-                            {
-                                ConsoleEx.Log("Wait timeout");
-                            }
-
-                            ConsoleEx.Log($"Roll; Timeout=[{_rollTimeout}] ms");
-                            _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
-                            SendData(updClient, pressData);
-                            sw.Restart();
-                            isTimeout = true;
-                            do
-                            {
-                                Thread.Sleep(watchCycle);
-                                if (isPickuped && saveDetectedCount > -2)
-                                {
-                                    ConsoleEx.Log("Put into bucket");
-                                    isTimeout = false;
-                                    Thread.Sleep(100);
-                                    break;
-                                }
-                            }
-                            while (sw.ElapsedMilliseconds < _rollTimeout);
-
-                            if (isTimeout)
-                            {
-                                ConsoleEx.Log("Roll timeout");
-                                Interlocked.Exchange(ref saveDetectedCount, 0);
-                            }
-
-                            SendData(updClient, releaseData);
-                            Thread.Sleep(100);
-                        }
-                    }
-                    catch (ThreadInterruptedException)
-                    {
-                        // Do nothing
-                    }
-                    finally
-                    {
+                        ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
                         SendData(updClient, releaseData);
-                        client.Dispose();
+                        sw.Restart();
+                        isPickuped = false;
+
+                        var isTimeout = true;
+                        do
+                        {
+                            Thread.Sleep(watchCycle);
+
+                            if (saveDetectedCount > 0)
+                            {
+                                ConsoleEx.Log("Hit!");
+                                isTimeout = false;
+                                break;
+                            }
+                        }
+                        while (sw.ElapsedMilliseconds < _waitTimeout);
+
+                        if (isTimeout)
+                        {
+                            ConsoleEx.Log("Wait timeout");
+                        }
+
+                        ConsoleEx.Log($"Roll; Timeout=[{_rollTimeout}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
+                        SendData(updClient, pressData);
+                        sw.Restart();
+                        isTimeout = true;
+                        do
+                        {
+                            Thread.Sleep(watchCycle);
+                            if (isPickuped && saveDetectedCount > -2)
+                            {
+                                ConsoleEx.Log("Put into bucket");
+                                isTimeout = false;
+                                Thread.Sleep(100);
+                                break;
+                            }
+                        }
+                        while (sw.ElapsedMilliseconds < _rollTimeout);
+
+                        if (isTimeout)
+                        {
+                            ConsoleEx.Log("Roll timeout");
+                            Interlocked.Exchange(ref saveDetectedCount, 0);
+                        }
+
+                        SendData(updClient, releaseData);
+                        Thread.Sleep(100);
                     }
+                }
+                catch (ThreadInterruptedException)
+                {
+                    // Do nothing
+                }
+                finally
+                {
+                    _logWatcher.DataSaved -= dataSaved;
+                    _logWatcher.FishPickuped -= fishPickuped;
+                    SendData(updClient, releaseData);
+                    client.Dispose();
                 }
             })
             {
                 IsBackground = true
             };
             thread.Start(client);
-            _thread = thread;
+            return thread;
+        }
+
+        /// <summary>
+        /// Start new auto operation <see cref="Thread"/> for "Idle Fishing".
+        /// </summary>
+        /// <param name="client"><see cref="UdpClient"/> for OSC.</param>
+        /// <returns>Created and started <see cref="Thread"/>.</returns>
+        private Thread StartIdleFishingThread(UdpClient client)
+        {
+            var thread = new Thread(param =>
+            {
+                var updClient = (UdpClient)param!;
+#if NET6_0_OR_GREATER
+                var pressData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01"u8;
+                var releaseData = "/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00"u8;
+#else
+                var pressData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01");
+                var releaseData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x00");
+#endif  // NET6_0_OR_GREATER
+                var sw = new Stopwatch();
+
+                int saveDetectedCount = 0;
+
+                var reelingStarted = new EventHandler((_, _) =>
+                {
+                    Interlocked.Increment(ref saveDetectedCount);
+                    ConsoleEx.Log($"Start reeling; detected count=[{saveDetectedCount}]");
+                });
+                _logWatcher.ReelingStarted += reelingStarted;
+                try
+                {
+                    const int watchCycle = 32;
+
+                    while (true)
+                    {
+                        Interlocked.Exchange(ref saveDetectedCount, 0);
+
+                        var chargeTime = _chargeTime;
+
+                        ConsoleEx.Log($"Charge ...; [{chargeTime}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
+                        SendData(updClient, pressData);
+                        Thread.Sleep(chargeTime);
+
+                        ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
+                        SendData(updClient, releaseData);
+                        sw.Restart();
+
+                        var isTimeout = true;
+                        do
+                        {
+                            Thread.Sleep(watchCycle);
+
+                            if (saveDetectedCount > 0)
+                            {
+                                ConsoleEx.Log("Hit!");
+                                isTimeout = false;
+                                break;
+                            }
+                        }
+                        while (sw.ElapsedMilliseconds < _waitTimeout);
+
+                        if (isTimeout)
+                        {
+                            ConsoleEx.Log("Wait timeout");
+                        }
+
+                        ConsoleEx.Log($"Roll; [{chargeTime * 3}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
+                        SendData(updClient, pressData);
+                        Thread.Sleep(chargeTime * 3);
+
+                        SendData(updClient, releaseData);
+                        Thread.Sleep(100);
+
+                        ConsoleEx.Log($"Collect; [{1500}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Collect");
+                        SendData(updClient, pressData);
+                        Thread.Sleep(1000);
+
+                        SendData(updClient, releaseData);
+                        Thread.Sleep(100);
+                    }
+                }
+                catch (ThreadInterruptedException)
+                {
+                    // Do nothing
+                }
+                finally
+                {
+                    _logWatcher.ReelingStarted -= reelingStarted;
+                    SendData(updClient, releaseData);
+                    client.Dispose();
+                }
+            })
+            {
+                IsBackground = true
+            };
+            thread.Start(client);
+            return thread;
         }
 
         /// <summary>
@@ -239,7 +377,13 @@ namespace AutoFishing
         private void StopAutoFishing()
         {
             ConsoleEx.Log("Stop");
+
+            _buttonStartStop.Content = "Start";
+            _textBoxHost.IsEnabled = true;
+            _nudPort.IsEnabled = true;
+            _labelStatus.Foreground = new SolidColorBrush(Colors.Black);
             _labelStatus.Content = "Stop";
+            Topmost = false;
 
             var thread = _thread;
             if (thread != null)
@@ -398,6 +542,39 @@ namespace AutoFishing
         private void ComboBoxHotKey_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateHotKey();
+        }
+
+        /// <summary>
+        /// <para>This method is called when a log that you joined to instance is detected.</para>
+        /// <para>Update the world name label.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the instance information.</param>
+        private void LogWatcher_JoinedToInstance(object sender, InstanceEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var instanceInfo = e.InstanceInfo;
+                var worldId = instanceInfo.WorldId;
+                _labelCurrentWorld.Foreground = new SolidColorBrush(
+                    worldId == WorldIds.SimpleFishingWorld || worldId == WorldIds.IdleFishing ? Colors.Green : Colors.Black);
+                _labelCurrentWorld.Content = e.InstanceInfo.WorldName;
+            });
+        }
+
+        /// <summary>
+        /// <para>This method is called when a log that you left from instance is detected.</para>
+        /// <para>Stop auto fishing.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the instance information.</param>
+        private void LogWatcher_LeftFromInstance(object sender, InstanceEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _labelCurrentWorld.Content = string.Empty;
+                StopAutoFishing();
+            });
         }
 
 #if NET6_0_OR_GREATER
