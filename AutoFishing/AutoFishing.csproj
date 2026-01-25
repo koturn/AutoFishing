@@ -13,11 +13,11 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <LangVersion>14</LangVersion>
     <Title>AutoFishing</Title>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>koturn</Authors>
     <Company>koturn</Company>
     <Description>Automation tool for "A Simple Fishing World" in VRChat.</Description>
-    <Copyright>Copyright (C) 2024 koturn All Rights Reserverd.</Copyright>
+    <Copyright>Copyright (C) 2025 koturn All Rights Reserverd.</Copyright>
     <PackageProjectUrl>https://github.com/koturn/AutoFishing</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/koturn/AutoFishing</RepositoryUrl>
