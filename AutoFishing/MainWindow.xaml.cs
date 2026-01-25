@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -169,84 +168,75 @@ namespace AutoFishing
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
-                var sw = new Stopwatch();
 
                 int saveDetectedCount = 0;
-                bool isPickuped = false;
 
+                var mreFishBite = new ManualResetEvent(false);
+                var mrePickup = new ManualResetEvent(false);
                 var dataSaved = new EventHandler((_, _) =>
                 {
-                    Interlocked.Increment(ref saveDetectedCount);
-                    ConsoleEx.Log($"Saved; saveDetectedCount=[{saveDetectedCount}]");
+                    mrePickup.Set();
+
+                    var newCount = Interlocked.Increment(ref saveDetectedCount);
+                    if (newCount > 0)
+                    {
+                        mreFishBite.Set();
+                    }
+                    ConsoleEx.Log($"Saved; saveDetectedCount=[{newCount}]");
                 });
                 var fishPickuped = new EventHandler((_, _) =>
                 {
-                    Interlocked.Exchange(ref saveDetectedCount, -2);
-                    isPickuped = true;
-                    ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{saveDetectedCount}]");
+                    var newCount = Interlocked.Exchange(ref saveDetectedCount, -2);
+                    ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{newCount}]");
                 });
                 _logWatcher.DataSaved += dataSaved;
                 _logWatcher.FishPickuped += fishPickuped;
                 try
                 {
-                    const int watchCycle = 32;
-
                     while (true)
                     {
+                        //
+                        // Hold for the duration of the charge time.
+                        //
+                        updClient.Send(PressData, PressData.Length);
                         ConsoleEx.Log($"Charge ...; [{_chargeTime}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
-                        updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(_chargeTime);
 
+                        //
+                        // Unhold and wait for the bite.
+                        //
+                        updClient.Send(ReleaseData, ReleaseData.Length);
                         ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
-                        updClient.Send(ReleaseData, ReleaseData.Length);
-                        sw.Restart();
-                        isPickuped = false;
 
-                        var isTimeout = true;
-                        do
-                        {
-                            Thread.Sleep(watchCycle);
-
-                            if (saveDetectedCount > 0)
-                            {
-                                ConsoleEx.Log("Hit!");
-                                isTimeout = false;
-                                break;
-                            }
-                        }
-                        while (sw.ElapsedMilliseconds < _waitTimeout);
-
-                        if (isTimeout)
+                        mreFishBite.Reset();
+                        if (!mreFishBite.WaitOne(_waitTimeout))
                         {
                             ConsoleEx.Log("Wait timeout");
                         }
 
-                        ConsoleEx.Log($"Roll; Timeout=[{_rollTimeout}] ms");
-                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
+                        //
+                        // Hold it until you reel it in.
+                        //
                         updClient.Send(PressData, PressData.Length);
-                        sw.Restart();
-                        isTimeout = true;
-                        do
+                        ConsoleEx.Log($"Start reeling; Timeout=[{_rollTimeout}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Reeling");
+                        mrePickup.Reset();
+                        if (mrePickup.WaitOne(_rollTimeout))
                         {
-                            Thread.Sleep(watchCycle);
-                            if (isPickuped && saveDetectedCount > -2)
-                            {
-                                ConsoleEx.Log("Put into bucket");
-                                isTimeout = false;
-                                Thread.Sleep(100);
-                                break;
-                            }
+                            ConsoleEx.Log("Put into bucket");
+                            Thread.Sleep(100);  // Wait for put into bucket.
                         }
-                        while (sw.ElapsedMilliseconds < _rollTimeout);
-
-                        if (isTimeout)
+                        else
                         {
-                            ConsoleEx.Log("Roll timeout");
-                            Interlocked.Exchange(ref saveDetectedCount, 0);
+                            var newCount = Interlocked.Exchange(ref saveDetectedCount, 0);
+                            ConsoleEx.Log($"Roll timeout; saveDetectedCount=[{newCount}]");
                         }
 
+                        //
+                        // Unhold for next hold.
+                        //
                         updClient.Send(ReleaseData, ReleaseData.Length);
                         Thread.Sleep(100);
                     }
@@ -257,8 +247,10 @@ namespace AutoFishing
                 }
                 finally
                 {
-                    _logWatcher.DataSaved -= dataSaved;
                     _logWatcher.FishPickuped -= fishPickuped;
+                    _logWatcher.DataSaved -= dataSaved;
+                    mrePickup.Dispose();
+                    mreFishBite.Dispose();
                     updClient.Send(ReleaseData, ReleaseData.Length);
                     client.Dispose();
                 }
@@ -280,70 +272,66 @@ namespace AutoFishing
             var thread = new Thread(param =>
             {
                 var updClient = (UdpClient)param!;
-                var sw = new Stopwatch();
 
-                int saveDetectedCount = 0;
-
+                var mreFishBite = new ManualResetEvent(false);
                 var reelingStarted = new EventHandler((_, _) =>
                 {
-                    Interlocked.Increment(ref saveDetectedCount);
-                    ConsoleEx.Log($"Start reeling; detected count=[{saveDetectedCount}]");
+                    mreFishBite.Set();
+                    ConsoleEx.Log("Reeling log detected");
                 });
                 _logWatcher.ReelingStarted += reelingStarted;
                 try
                 {
-                    const int watchCycle = 32;
-
                     while (true)
                     {
-                        Interlocked.Exchange(ref saveDetectedCount, 0);
-
                         var chargeTime = _chargeTime;
 
+                        //
+                        // Hold for the duration of the charge time.
+                        //
                         ConsoleEx.Log($"Charge ...; [{chargeTime}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Charging");
                         updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(chargeTime);
 
+                        //
+                        // Unhold and wait for the bite.
+                        //
                         ConsoleEx.Log($"Release; Timeout=[{_waitTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Wait");
                         updClient.Send(ReleaseData, ReleaseData.Length);
 
-                        sw.Restart();
-
-                        var isTimeout = true;
-                        do
-                        {
-                            Thread.Sleep(watchCycle);
-
-                            if (saveDetectedCount > 0)
-                            {
-                                ConsoleEx.Log("Hit!");
-                                isTimeout = false;
-                                break;
-                            }
-                        }
-                        while (sw.ElapsedMilliseconds < _waitTimeout);
-
-                        if (isTimeout)
+                        mreFishBite.Reset();
+                        if (!mreFishBite.WaitOne(_waitTimeout))
                         {
                             ConsoleEx.Log("Wait timeout");
                         }
 
-                        ConsoleEx.Log($"Roll; [{chargeTime * 3}] ms");
-                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Roll");
+                        //
+                        // Hold it until you reel it in.
+                        //
+                        ConsoleEx.Log($"Start reeling; [{chargeTime * 3}] ms");
+                        _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Reeling");
                         updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(chargeTime * 3);
 
+                        //
+                        // Unhold for next hold.
+                        //
                         updClient.Send(ReleaseData, ReleaseData.Length);
-
                         Thread.Sleep(100);
 
-                        ConsoleEx.Log($"Collect; [{1500}] ms");
+                        //
+                        // Hold to collect cached fish.
+                        //
+                        ConsoleEx.Log($"Collect; [{1000}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Collect");
                         updClient.Send(PressData, PressData.Length);
                         Thread.Sleep(1000);
 
+                        //
+                        // Unhold for next hold.
+                        //
                         updClient.Send(ReleaseData, ReleaseData.Length);
                         Thread.Sleep(100);
                     }
@@ -355,6 +343,7 @@ namespace AutoFishing
                 finally
                 {
                     _logWatcher.ReelingStarted -= reelingStarted;
+                    mreFishBite.Dispose();
                     updClient.Send(ReleaseData, ReleaseData.Length);
                     client.Dispose();
                 }
