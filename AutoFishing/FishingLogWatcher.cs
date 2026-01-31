@@ -33,10 +33,16 @@ namespace AutoFishing
         /// <summary>
         /// Occurs when fish pickuped.
         /// </summary>
+        /// <remarks>
+        /// For "A Simple Fishing World".
+        /// </remarks>
         public event EventHandler? FishPickuped;
         /// <summary>
         /// <para>Occurs when fish pickuped.</para>
         /// </summary>
+        /// <remarks>
+        /// For "Idle Fishing".
+        /// </remarks>
         public event EventHandler? ReelingStarted;
         /// <summary>
         /// Occurs when a rod picked up.
@@ -438,6 +444,171 @@ namespace AutoFishing
                 return (option.Substring(0, idxParenStart), option.Substring(idxParenStart + 1, idxParenEnd - idxParenStart - 1));
             }
 
+            /// <summary>
+            /// Parse first log line as saved log in "A Simple Fishing World".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "A Simple Fishing World".
+            /// </remarks>
+            private bool ParseAsSaveLog(string firstLine)
+            {
+                if (firstLine != "SAVED DATA")
+                {
+                    return false;
+                }
+
+                watcher.DataSaved?.Invoke(watcher, EventArgs.Empty);
+
+                return true;
+            }
+
+            /// <summary>
+            /// Parse first log line as fish picked up log.
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "A Simple Fishing World".
+            /// </remarks>
+            private bool ParseAsFishPickupLog(string firstLine)
+            {
+                if (firstLine != "Fish Pickup attached to rod Toggles(True)")
+                {
+                    return false;
+                }
+
+                watcher.FishPickuped?.Invoke(watcher, EventArgs.Empty);
+
+                return true;
+            }
+
+            /// <summary>
+            /// Parse first log line as reeling started log in "Idle Fishing".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "Idle Fishing".
+            /// </remarks>
+            private bool ParseAsReelingStartedLog(string firstLine)
+            {
+                if (firstLine != "Started Reeling")
+                {
+                    return false;
+                }
+
+                watcher.ReelingStarted?.Invoke(watcher, EventArgs.Empty);
+
+                return true;
+            }
+
+            /// <summary>
+            /// Parse first log line as a new ring reserved log in "Idle Fishing".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "Idle Fishing".
+            /// </remarks>
+            private bool ParseAsRingReservedLog(string firstLine)
+            {
+                if (!firstLine.StartsWith("Reserving ring ", StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+#if NET9_0_OR_GREATER
+                var tokenSpan = firstLine.AsSpan(15);
+                var numberTokenEnumerator = tokenSpan.Split(' ');
+
+                numberTokenEnumerator.MoveNext();
+                var ringPosition = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+
+                numberTokenEnumerator.MoveNext();
+                var ringKind = (RingKind)int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+
+                numberTokenEnumerator.MoveNext();
+                var ringIndex = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+#else
+                var numberTokens = firstLine.Substring(15).Split(' ');
+                var ringPosition = int.Parse(numberTokens[0]);
+                var ringKind = (RingKind)int.Parse(numberTokens[1]);
+                var ringIndex = int.Parse(numberTokens[2]);
+#endif  // NET9_0_OR_GREATER
+
+                var idleFisingEventArgs = new IdleFishingRingEventArgs(ringPosition, ringKind, ringIndex);
+                _idleFishingRingEventArgArray[ringIndex] = idleFisingEventArgs;
+                watcher.RingReserved?.Invoke(watcher, idleFisingEventArgs);
+
+                return true;
+            }
+
+            /// <summary>
+            /// Parse first log line as a ring activated log in "Idle Fishing".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "Idle Fishing".
+            /// </remarks>
+            private bool ParseAsRingActivatedLog(string firstLine)
+            {
+                if (!firstLine.StartsWith("Activate Ring ", StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+#if NET7_0_OR_GREATER
+                if (int.TryParse(firstLine.AsSpan(14), out int ringIndex))
+#else
+                if (int.TryParse(firstLine.Substring(14), out int ringIndex))
+#endif  // NET7_0_OR_GREATER
+                {
+                    var e = _idleFishingRingEventArgArray[ringIndex];
+                    if (e != null)
+                    {
+                        e.IsActivated = true;
+                        watcher.RingActivated?.Invoke(watcher, e);
+                    }
+                }
+
+                return true;
+            }
+
+            /// <summary>
+            /// Parse first log line as a ring deactivated log in "Idle Fishing".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "Idle Fishing".
+            /// </remarks>
+            private bool ParseAsRingDeactivatedLog(string firstLine)
+            {
+                if (!firstLine.StartsWith("Deactivate Ring ", StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+#if NET7_0_OR_GREATER
+                if (int.TryParse(firstLine.AsSpan(16), out int ringIndex))
+#else
+                if (int.TryParse(firstLine.Substring(16), out int ringIndex))
+#endif  // NET7_0_OR_GREATER
+                {
+                    var e = _idleFishingRingEventArgArray[ringIndex];
+                    if (e != null)
+                    {
+                        watcher.RingDeactivated?.Invoke(watcher, e);
+                        _idleFishingRingEventArgArray[ringIndex] = null;
+                    }
+                }
+
+                return true;
+            }
+
 
             /// <summary>
             /// Parse log lines as "A Simple Fishing World" log.
@@ -448,18 +619,8 @@ namespace AutoFishing
             /// <returns>True if parsed successfully, false otherwise.</returns>
             private static bool ParseAsSimpleFishingWorldLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
             {
-                if (firstLine == "SAVED DATA")
-                {
-                    watcher.DataSaved?.Invoke(parser, EventArgs.Empty);
-                    return true;
-                }
-                else if (firstLine == "Fish Pickup attached to rod Toggles(True)")
-                {
-                    watcher.FishPickuped?.Invoke(parser, EventArgs.Empty);
-                    return true;
-                }
-
-                return false;
+                return parser.ParseAsSaveLog(firstLine)
+                    || parser.ParseAsFishPickupLog(firstLine);
             }
 
             /// <summary>
@@ -471,76 +632,10 @@ namespace AutoFishing
             /// <returns>True if parsed successfully, false otherwise.</returns>
             private static bool ParseAsIdleFishingLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
             {
-                if (firstLine == "Started Reeling")
-                {
-                    watcher.ReelingStarted?.Invoke(parser, EventArgs.Empty);
-                    return true;
-                }
-                else if (firstLine.StartsWith("Reserving ring ", StringComparison.Ordinal))
-                {
-#if NET9_0_OR_GREATER
-                    var tokenSpan = firstLine.AsSpan(15);
-                    var numberTokenEnumerator = tokenSpan.Split(' ');
-
-                    numberTokenEnumerator.MoveNext();
-                    var ringPosition = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
-
-                    numberTokenEnumerator.MoveNext();
-                    var ringKind = (RingKind)int.Parse(tokenSpan[numberTokenEnumerator.Current]);
-
-                    numberTokenEnumerator.MoveNext();
-                    var ringIndex = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
-#else
-                    var numberTokens = firstLine.Substring(15).Split(' ');
-                    var ringPosition = int.Parse(numberTokens[0]);
-                    var ringKind = (RingKind)int.Parse(numberTokens[1]);
-                    var ringIndex = int.Parse(numberTokens[2]);
-#endif  // NET9_0_OR_GREATER
-
-                    var idleFisingEventArgs = new IdleFishingRingEventArgs(ringPosition, ringKind, ringIndex);
-                    parser._idleFishingRingEventArgArray[ringIndex] = idleFisingEventArgs;
-                    watcher.RingReserved?.Invoke(watcher, idleFisingEventArgs);
-
-                    return true;
-                }
-                else if (firstLine.StartsWith("Activate Ring ", StringComparison.Ordinal))
-                {
-#if NET7_0_OR_GREATER
-                    if (int.TryParse(firstLine.AsSpan(14), out int ringIndex))
-#else
-                    if (int.TryParse(firstLine.Substring(14), out int ringIndex))
-#endif  // NET7_0_OR_GREATER
-                    {
-                        var e = parser._idleFishingRingEventArgArray[ringIndex];
-                        if (e != null)
-                        {
-                            e.IsActivated = true;
-                            watcher.RingActivated?.Invoke(watcher, e);
-                        }
-                    }
-
-                    return true;
-                }
-                else if (firstLine.StartsWith("Deactivate Ring ", StringComparison.Ordinal))
-                {
-#if NET7_0_OR_GREATER
-                    if (int.TryParse(firstLine.AsSpan(16), out int ringIndex))
-#else
-                    if (int.TryParse(firstLine.Substring(16), out int ringIndex))
-#endif  // NET7_0_OR_GREATER
-                    {
-                        var e = parser._idleFishingRingEventArgArray[ringIndex];
-                        if (e != null)
-                        {
-                            watcher.RingDeactivated?.Invoke(watcher, e);
-                            parser._idleFishingRingEventArgArray[ringIndex] = null;
-                        }
-                    }
-
-                    return true;
-                }
-
-                return false;
+                return parser.ParseAsReelingStartedLog(firstLine)
+                    || parser.ParseAsRingReservedLog(firstLine)
+                    || parser.ParseAsRingActivatedLog(firstLine)
+                    || parser.ParseAsRingDeactivatedLog(firstLine);
             }
         }
     }
