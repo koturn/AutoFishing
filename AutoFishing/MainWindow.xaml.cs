@@ -314,10 +314,11 @@ namespace AutoFishing
                         //
                         // Hold it until you reel it in.
                         //
-                        ConsoleEx.Log($"Start reeling; [{chargeTime * 3}] ms");
+                        var reelingTime = Math.Max(900, chargeTime * 3);
+                        ConsoleEx.Log($"Start reeling; [{reelingTime}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Reeling");
                         updClient.Send(PressData, PressData.Length);
-                        Thread.Sleep(chargeTime * 3);
+                        Thread.Sleep(reelingTime);
 
                         //
                         // Unhold for next hold.
