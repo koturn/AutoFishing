@@ -22,6 +22,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -123,5 +124,9 @@
 
         <Label Content="Current World:" Grid.Row="11" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
         <Label x:Name="_labelCurrentWorld" Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+
+        <StatusBar Grid.Row="12" Grid.ColumnSpan="6" Margin="3,3,3,3">
+            <StatusBarItem x:Name="_statusBarItemInformation"></StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

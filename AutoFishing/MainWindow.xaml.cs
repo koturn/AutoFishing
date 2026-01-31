@@ -10,6 +10,8 @@ using System.Windows.Media;
 using NumericUpDownLib;
 using Koturn.Windows.GlobalHotKeys;
 using Koturn.VRChat.Log.Events;
+using AutoFishing.Enums;
+using AutoFishing.Events;
 
 
 namespace AutoFishing
@@ -32,6 +34,11 @@ namespace AutoFishing
         /// Customized VRChat log watcher.
         /// </summary>
         private readonly FishingLogWatcher _logWatcher = new();
+        /// <summary>
+        /// Array of the <see cref="IdleFishingRingEventArgs"/>.
+        /// </summary>
+        /// <remarks>This array has two elements only.</remarks>
+        private readonly IdleFishingRingEventArgs?[] _idleFishingRingEventArgsArray = new IdleFishingRingEventArgs[2];
         /// <summary>
         /// Global Hot Key manager.
         /// </summary>
@@ -71,9 +78,11 @@ namespace AutoFishing
 
             _logWatcher.JoinedToInstance += LogWatcher_JoinedToInstance;
             _logWatcher.Start();
+            _logWatcher.RingReserved += LogWatcher_RingReserved;
+            _logWatcher.RingActivated += LogWatcher_RingActivated;
+            _logWatcher.RingDeactivated += LogWatcher_RingDeactivated;
             _logWatcher.LeftFromInstance += LogWatcher_LeftFromInstance;
         }
-
 
         /// <summary>
         /// Represents the method that handles Win32 window messages.
@@ -365,8 +374,6 @@ namespace AutoFishing
         /// </summary>
         private void StopAutoFishing()
         {
-            ConsoleEx.Log("Stop");
-
             _buttonStartStop.Content = "Start";
             _textBoxHost.IsEnabled = true;
             _nudPort.IsEnabled = true;
@@ -377,6 +384,7 @@ namespace AutoFishing
             var thread = _thread;
             if (thread != null)
             {
+                ConsoleEx.Log("Stop");
                 _thread = null;
                 thread.Interrupt();
                 thread.Join(1000);
@@ -628,6 +636,7 @@ namespace AutoFishing
             Dispatcher.Invoke(() =>
             {
                 _labelCurrentWorld.Content = string.Empty;
+                _statusBarItemInformation.Content = string.Empty;
                 StopAutoFishing();
             });
         }
@@ -652,6 +661,77 @@ namespace AutoFishing
         private void LogWatcher_RodDropped(object sender, ObjectDroppedEventArgs e)
         {
             Dispatcher.Invoke(StopAutoFishing);
+        }
+
+        /// <summary>
+        /// <para>This method is called when a new ring is reserved.</para>
+        /// <para>Update <see cref="_statusBarItemInformation"/>.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the ring event information.</param>
+        private void LogWatcher_RingReserved(object sender, IdleFishingRingEventArgs e)
+        {
+            _idleFishingRingEventArgsArray[e.Index] = e;
+            UpdateInformationForRingEvent();
+            ConsoleEx.Log($"Ring at [{e.Position}][{(e.Kind == RingKind.Blue ? "Blue" : "Yellow")}][Reserved]");
+        }
+
+        /// <summary>
+        /// <para>This method is called when a new ring is reserved.</para>
+        /// <para>Update <see cref="_statusBarItemInformation"/>.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the ring event information.</param>
+        private void LogWatcher_RingActivated(object sender, IdleFishingRingEventArgs e)
+        {
+            _idleFishingRingEventArgsArray[e.Index] = e;
+            UpdateInformationForRingEvent();
+            ConsoleEx.Log($"Ring at [{e.Position}][{(e.Kind == RingKind.Blue ? "Blue" : "Yellow")}][Activated]");
+        }
+
+        /// <summary>
+        /// <para>This method is called when a new ring is reserved.</para>
+        /// <para>Update <see cref="_statusBarItemInformation"/>.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the ring event information.</param>
+        private void LogWatcher_RingDeactivated(object sender, IdleFishingRingEventArgs e)
+        {
+            _idleFishingRingEventArgsArray[e.Index] = null;
+            UpdateInformationForRingEvent();
+            ConsoleEx.Log($"Ring at [{e.Position}][{(e.Kind == RingKind.Blue ? "Blue" : "Yellow")}][Deactivated]");
+        }
+
+        /// <summary>
+        /// Update content of <see cref="_statusBarItemInformation"/> for ring information.
+        /// </summary>
+        private void UpdateInformationForRingEvent()
+        {
+            var sb = new StringBuilder();
+            foreach (var e in _idleFishingRingEventArgsArray)
+            {
+                if (e == null)
+                {
+                    continue;
+                }
+                if (sb.Length > 0)
+                {
+                    sb.Append("; ");
+                }
+                sb.AppendFormat("{0} Ring: {1}", e.Kind == RingKind.Blue ? "Blue" : "Yellow", e.Position);
+                if (!e.IsActivated)
+                {
+                    sb.Append(" (Reserved)");
+                }
+            }
+            if (sb.Length == 0)
+            {
+                Dispatcher.Invoke(() => _statusBarItemInformation.Content = string.Empty);
+            }
+            else
+            {
+                Dispatcher.Invoke(() => _statusBarItemInformation.Content = sb.ToString());
+            }
         }
     }
 }

@@ -4,6 +4,8 @@ using Koturn.VRChat.Log;
 using Koturn.VRChat.Log.Enums;
 using Koturn.VRChat.Log.Events;
 using AutoFishing.Internals;
+using AutoFishing.Events;
+using AutoFishing.Enums;
 
 
 namespace AutoFishing
@@ -22,9 +24,11 @@ namespace AutoFishing
         /// </summary>
         public event VRCLogEventHandler<InstanceEventArgs>? LeftFromInstance;
         /// <summary>
-        /// <para>Occurs when detect SAVE log.</para>
-        /// <para>For "A Simple Fishing World".</para>
+        /// Occurs when detect SAVE log.
         /// </summary>
+        /// <remarks>
+        /// For "A Simple Fishing World".
+        /// </remarks>
         public event EventHandler? DataSaved;
         /// <summary>
         /// Occurs when fish pickuped.
@@ -42,6 +46,27 @@ namespace AutoFishing
         /// Occurs when a rod dropped.
         /// </summary>
         public event VRCLogEventHandler<ObjectDroppedEventArgs>? RodDropped;
+        /// <summary>
+        /// Occurs when new ring is reserved.
+        /// </summary>
+        /// <remarks>
+        /// For "Idle Fishing".
+        /// </remarks>
+        public event VRCLogEventHandler<IdleFishingRingEventArgs>? RingReserved;
+        /// <summary>
+        /// Occurs when a ring is activated.
+        /// </summary>
+        /// <remarks>
+        /// For "Idle Fishing".
+        /// </remarks>
+        public event VRCLogEventHandler<IdleFishingRingEventArgs>? RingActivated;
+        /// <summary>
+        /// Occurs when a ring is deactivated.
+        /// </summary>
+        /// <remarks>
+        /// For "Idle Fishing".
+        /// </remarks>
+        public event VRCLogEventHandler<IdleFishingRingEventArgs>? RingDeactivated;
         /// <summary>
         /// Current instance information.
         /// </summary>
@@ -94,6 +119,11 @@ namespace AutoFishing
             /// Internal object name of the rod in the current world.
             /// </summary>
             private string? _rodName;
+            /// <summary>
+            /// Array of the <see cref="IdleFishingRingEventArgs"/>.
+            /// </summary>
+            /// <remarks>This array has two elements only.</remarks>
+            private readonly IdleFishingRingEventArgs?[] _idleFishingRingEventArgArray = new IdleFishingRingEventArgs[2];
 
 
             /// <summary>
@@ -444,6 +474,69 @@ namespace AutoFishing
                 if (firstLine == "Started Reeling")
                 {
                     watcher.ReelingStarted?.Invoke(parser, EventArgs.Empty);
+                    return true;
+                }
+                else if (firstLine.StartsWith("Reserving ring ", StringComparison.Ordinal))
+                {
+#if NET9_0_OR_GREATER
+                    var tokenSpan = firstLine.AsSpan(15);
+                    var numberTokenEnumerator = tokenSpan.Split(' ');
+
+                    numberTokenEnumerator.MoveNext();
+                    var ringPosition = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+
+                    numberTokenEnumerator.MoveNext();
+                    var ringKind = (RingKind)int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+
+                    numberTokenEnumerator.MoveNext();
+                    var ringIndex = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
+#else
+                    var numberTokens = firstLine.Substring(15).Split(' ');
+                    var ringPosition = int.Parse(numberTokens[0]);
+                    var ringKind = (RingKind)int.Parse(numberTokens[1]);
+                    var ringIndex = int.Parse(numberTokens[2]);
+#endif  // NET9_0_OR_GREATER
+
+                    var idleFisingEventArgs = new IdleFishingRingEventArgs(ringPosition, ringKind, ringIndex);
+                    parser._idleFishingRingEventArgArray[ringIndex] = idleFisingEventArgs;
+                    watcher.RingReserved?.Invoke(watcher, idleFisingEventArgs);
+
+                    return true;
+                }
+                else if (firstLine.StartsWith("Activate Ring ", StringComparison.Ordinal))
+                {
+#if NET7_0_OR_GREATER
+                    if (int.TryParse(firstLine.AsSpan(14), out int ringIndex))
+#else
+                    if (int.TryParse(firstLine.Substring(14), out int ringIndex))
+#endif  // NET7_0_OR_GREATER
+                    {
+                        var e = parser._idleFishingRingEventArgArray[ringIndex];
+                        if (e != null)
+                        {
+                            e.IsActivated = true;
+                            watcher.RingActivated?.Invoke(watcher, e);
+                        }
+                    }
+
+                    return true;
+                }
+                else if (firstLine.StartsWith("Deactivate Ring ", StringComparison.Ordinal))
+                {
+#if NET7_0_OR_GREATER
+                    if (int.TryParse(firstLine.AsSpan(16), out int ringIndex))
+#else
+                    if (int.TryParse(firstLine.Substring(16), out int ringIndex))
+#endif  // NET7_0_OR_GREATER
+                    {
+                        var e = parser._idleFishingRingEventArgArray[ringIndex];
+                        if (e != null)
+                        {
+                            watcher.RingDeactivated?.Invoke(watcher, e);
+                            parser._idleFishingRingEventArgArray[ringIndex] = null;
+                        }
+                    }
+
                     return true;
                 }
 
