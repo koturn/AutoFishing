@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Koturn.VRChat.Log;
 using Koturn.VRChat.Log.Enums;
 using Koturn.VRChat.Log.Events;
+using AutoFishing.Internals;
 
 
 namespace AutoFishing
@@ -26,20 +27,27 @@ namespace AutoFishing
         /// </summary>
         public event EventHandler? DataSaved;
         /// <summary>
-        /// <para>Occurs when fish pickuped.</para>
-        /// <para>For "A Simple Fishing World".</para>
+        /// Occurs when fish pickuped.
         /// </summary>
         public event EventHandler? FishPickuped;
         /// <summary>
         /// <para>Occurs when fish pickuped.</para>
-        /// <para>For "Idle Fishing".</para>
         /// </summary>
         public event EventHandler? ReelingStarted;
+        /// <summary>
+        /// Occurs when a rod picked up.
+        /// </summary>
+        public event VRCLogEventHandler<ObjectPickedupEventArgs>? RodPickedUp;
+        /// <summary>
+        /// Occurs when a rod dropped.
+        /// </summary>
+        public event VRCLogEventHandler<ObjectDroppedEventArgs>? RodDropped;
         /// <summary>
         /// Current instance information.
         /// </summary>
         /// <remarks>Running multiple instances of the VRChat client simultaneously is not supported.</remarks>
         public InstanceInfo? InstanceInfo { get; private set; }
+
 
         /// <summary>
         /// Create an instance of <see cref="VRCBaseLogParser"/>.
@@ -65,6 +73,14 @@ namespace AutoFishing
             /// "[Behaviour]" log offset.
             /// </summary>
             private const int BehaviourLogOffset = 12;
+            /// <summary>
+            /// Internal object name of the rod in "A Simple Fishing World".
+            /// </summary>
+            private const string SimpleFishingWorldRodName = "Rod Pickup";
+            /// <summary>
+            /// Internal object name of the rod in "Idle Fishing".
+            /// </summary>
+            private const string IdleFishingRodName = "Fishing Rod Pickup";
 
             /// <summary>
             /// Instance information.
@@ -74,6 +90,10 @@ namespace AutoFishing
             /// Function pointer to a function that parses the log for a specific world.
             /// </summary>
             private unsafe delegate*<FishingLogParser, FishingLogWatcher, string, bool> _parseAsSpecificWorldLog;
+            /// <summary>
+            /// Internal object name of the rod in the current world.
+            /// </summary>
+            private string? _rodName;
 
 
             /// <summary>
@@ -116,49 +136,73 @@ namespace AutoFishing
                     return false;
                 }
 
-                return ParseAsJoiningLog(firstLine)
+                return ParseAsPickupObjectLog(firstLine)
+                    || ParseAsDropObjectLog(firstLine)
+                    || ParseAsJoiningLog(firstLine)
                     || ParseAsLeftLog(firstLine);
             }
 
             /// <summary>
-            /// Parse log lines as "A Simple Fishing World" log.
+            /// Parse first log line as pickup object log.
             /// </summary>
-            /// <param name="parser"><see cref="FishingLogParser"/> instance.</param>
-            /// <param name="watcher">Log watcher.</param>
             /// <param name="firstLine">First log line.</param>
             /// <returns>True if parsed successfully, false otherwise.</returns>
-            private static bool ParseAsSimpleFishingWorldLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
+            private bool ParseAsPickupObjectLog(string firstLine)
             {
-                if (firstLine == "SAVED DATA")
+                var match = RegexProvider.PickupObjectRegex.Match(firstLine, BehaviourLogOffset, firstLine.Length - BehaviourLogOffset);
+                if (!match.Success)
                 {
-                    watcher.DataSaved?.Invoke(parser, EventArgs.Empty);
-                    return true;
-                }
-                else if (firstLine == "Fish Pickup attached to rod Toggles(True)")
-                {
-                    watcher.FishPickuped?.Invoke(parser, EventArgs.Empty);
-                    return true;
+                    return false;
                 }
 
-                return false;
+                var groups = match.Groups;
+                var objectName = groups[1].Value;
+                if (objectName == _rodName)
+                {
+                    watcher.RodPickedUp?.Invoke(
+                        this,
+                        new ObjectPickedupEventArgs(
+                            FileName,
+                            LogUntil,
+                            objectName,
+                            bool.Parse(groups[2].Value),
+                            bool.Parse(groups[3].Value),
+                            groups[4].Value,
+                            bool.Parse(groups[5].Value)));
+                }
+
+                return true;
             }
 
             /// <summary>
-            /// Parse log lines as "Idle Fishing" log.
+            /// Parse first log line as drop object log.
             /// </summary>
-            /// <param name="parser"><see cref="VRCCoreExLogParser"/> instance.</param>
-            /// <param name="watcher">Log watcher.</param>
             /// <param name="firstLine">First log line.</param>
             /// <returns>True if parsed successfully, false otherwise.</returns>
-            private static bool ParseAsIdleFishingLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
+            private bool ParseAsDropObjectLog(string firstLine)
             {
-                if (firstLine == "Started Reeling")
+                var match = RegexProvider.DropObjectRegex.Match(firstLine, BehaviourLogOffset, firstLine.Length - BehaviourLogOffset);
+                if (!match.Success)
                 {
-                    watcher.ReelingStarted?.Invoke(parser, EventArgs.Empty);
-                    return true;
+                    return false;
                 }
 
-                return false;
+                var groups = match.Groups;
+                var objectName = groups[1].Value;
+                if (objectName == _rodName)
+                {
+                    watcher.RodDropped?.Invoke(
+                        this,
+                        new ObjectDroppedEventArgs(
+                            FileName,
+                            LogUntil,
+                            objectName,
+                            bool.Parse(groups[2].Value),
+                            groups[3].Value,
+                            groups[4].Value));
+                }
+
+                return true;
             }
 
             /// <summary>
@@ -181,12 +225,21 @@ namespace AutoFishing
 
                     unsafe
                     {
-                        _parseAsSpecificWorldLog = _instanceInfo.WorldId switch
+                        switch (_instanceInfo.WorldId)
                         {
-                            WorldIds.SimpleFishingWorld => &ParseAsSimpleFishingWorldLog,
-                            WorldIds.IdleFishing => &ParseAsIdleFishingLog,
-                            _ => null
-                        };
+                            case WorldIds.SimpleFishingWorld:
+                                _parseAsSpecificWorldLog = &ParseAsSimpleFishingWorldLog;
+                                _rodName = SimpleFishingWorldRodName;
+                                break;
+                            case WorldIds.IdleFishing:
+                                _parseAsSpecificWorldLog = &ParseAsIdleFishingLog;
+                                _rodName = IdleFishingRodName;
+                                break;
+                            default:
+                                _parseAsSpecificWorldLog = null;
+                                _rodName = null;
+                                break;
+                        }
                     }
 
                     return true;
@@ -353,6 +406,48 @@ namespace AutoFishing
                 }
 
                 return (option.Substring(0, idxParenStart), option.Substring(idxParenStart + 1, idxParenEnd - idxParenStart - 1));
+            }
+
+
+            /// <summary>
+            /// Parse log lines as "A Simple Fishing World" log.
+            /// </summary>
+            /// <param name="parser"><see cref="FishingLogParser"/> instance.</param>
+            /// <param name="watcher">Log watcher.</param>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            private static bool ParseAsSimpleFishingWorldLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
+            {
+                if (firstLine == "SAVED DATA")
+                {
+                    watcher.DataSaved?.Invoke(parser, EventArgs.Empty);
+                    return true;
+                }
+                else if (firstLine == "Fish Pickup attached to rod Toggles(True)")
+                {
+                    watcher.FishPickuped?.Invoke(parser, EventArgs.Empty);
+                    return true;
+                }
+
+                return false;
+            }
+
+            /// <summary>
+            /// Parse log lines as "Idle Fishing" log.
+            /// </summary>
+            /// <param name="parser"><see cref="VRCCoreExLogParser"/> instance.</param>
+            /// <param name="watcher">Log watcher.</param>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            private static bool ParseAsIdleFishingLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
+            {
+                if (firstLine == "Started Reeling")
+                {
+                    watcher.ReelingStarted?.Invoke(parser, EventArgs.Empty);
+                    return true;
+                }
+
+                return false;
             }
         }
     }

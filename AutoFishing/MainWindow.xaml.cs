@@ -555,6 +555,50 @@ namespace AutoFishing
         }
 
         /// <summary>
+        /// <para>This method is called when the checkbox of "Picked up and Start" is checked.</para>
+        /// <para>Add callback method to <see cref="FishingLogWatcher.FishPickuped"/>.</para>
+        /// </summary>
+        /// <param name="sender">Source checkbox.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxPickedUpAndStart_Checked(object sender, RoutedEventArgs e)
+        {
+            _logWatcher.RodPickedUp += LogWatcher_RodPickedUp;
+        }
+
+        /// <summary>
+        /// <para>This method is called when the checkbox of "Picked up and Start" is unchecked.</para>
+        /// <para>Remove callback method to <see cref="FishingLogWatcher.FishPickuped"/>.</para>
+        /// </summary>
+        /// <param name="sender">Source checkbox.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxPickedUpAndStart_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _logWatcher.RodPickedUp -= LogWatcher_RodPickedUp;
+        }
+
+        /// <summary>
+        /// <para>This method is called when the checkbox of "Dropped and stop" is checked.</para>
+        /// <para>Add callback method to <see cref="FishingLogWatcher.FishPickuped"/>.</para>
+        /// </summary>
+        /// <param name="sender">Source checkbox.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxDroppedAndStop_Checked(object sender, RoutedEventArgs e)
+        {
+            _logWatcher.RodDropped += LogWatcher_RodDropped;
+        }
+
+        /// <summary>
+        /// <para>This method is called when the checkbox of "Dropped and stop" is unchecked.</para>
+        /// <para>Remove callback method to <see cref="FishingLogWatcher.FishPickuped"/>.</para>
+        /// </summary>
+        /// <param name="sender">Source checkbox.</param>
+        /// <param name="e">Contains state information and event data associated with a routed event.</param>
+        private void CheckBoxDroppedAndStop_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _logWatcher.RodDropped -= LogWatcher_RodDropped;
+        }
+
+        /// <summary>
         /// <para>This method is called when a log that you joined to instance is detected.</para>
         /// <para>Update the world name label.</para>
         /// </summary>
@@ -585,6 +629,28 @@ namespace AutoFishing
                 _labelCurrentWorld.Content = string.Empty;
                 StopAutoFishing();
             });
+        }
+
+        /// <summary>
+        /// <para>This method is called when a rod is picked up.</para>
+        /// <para>Stop auto fishing.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the picked up object.</param>
+        private void LogWatcher_RodPickedUp(object sender, ObjectPickedupEventArgs e)
+        {
+            Dispatcher.Invoke(StartAutoFishing);
+        }
+
+        /// <summary>
+        /// <para>This method is called when a rod is dropped.</para>
+        /// <para>Stop auto fishing.</para>
+        /// </summary>
+        /// <param name="sender"><see cref="_logWatcher"/></param>
+        /// <param name="e">An object that contains the dropped object.</param>
+        private void LogWatcher_RodDropped(object sender, ObjectDroppedEventArgs e)
+        {
+            Dispatcher.Invoke(StopAutoFishing);
         }
     }
 }
