@@ -188,10 +188,12 @@ namespace AutoFishing
                 var mrePickup = new ManualResetEvent(false);
                 var dataSaved = new EventHandler((_, _) =>
                 {
-                    mrePickup.Set();
-
                     var newCount = Interlocked.Increment(ref saveDetectedCount);
-                    if (newCount > 0)
+                    if (newCount == -1)
+                    {
+                        mrePickup.Set();
+                    }
+                    else if (newCount > 0)
                     {
                         mreFishBite.Set();
                     }
