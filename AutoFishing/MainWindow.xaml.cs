@@ -22,6 +22,14 @@ namespace AutoFishing
     public partial class MainWindow : Window
     {
         /// <summary>
+        /// Minimum charge time in "A Simple Fishing World".
+        /// </summary>
+        private const int SimpleFishingWorldMinimulChargeTime = 200;
+        /// <summary>
+        /// Minimum charge time in "Idle Fishing".
+        /// </summary>
+        private const int IdleFishingMinimulChargeTime = 16;
+        /// <summary>
         /// OSC data byte sequence of press trigger on the right hand.
         /// </summary>
         private static readonly byte[] PressData = Encoding.ASCII.GetBytes("/input/UseRight\x00,i\x00\x00\x00\x00\x00\x01");
@@ -50,15 +58,19 @@ namespace AutoFishing
         /// <summary>
         /// Charge time (milliseconds).
         /// </summary>
-        private int _chargeTime = 0;
+        private int _chargeTime = 500;
+        /// <summary>
+        /// Minimum charge time (milliseconds).
+        /// </summary>
+        private int _minimumChargeTime = 16;
         /// <summary>
         /// Timeout for Rolling (milliseconds).
         /// </summary>
-        private int _rollTimeout = 0;
+        private int _rollTimeout = 20000;
         /// <summary>
         /// Timeout for waiting (milliseconds).
         /// </summary>
-        private int _waitTimeout = 0;
+        private int _waitTimeout = 90000;
         /// <summary>
         /// Minimal input interval (milliseconds).
         /// </summary>
@@ -552,6 +564,7 @@ namespace AutoFishing
         private void NudInputInterval_ValueChanged(object sender, RoutedPropertyChangedEventArgs<ushort> e)
         {
             _minimalInputInterval = (int)e.NewValue;
+            _nudChargeTime.MinValue = (uint)Math.Max(_minimumChargeTime, _minimalInputInterval);
         }
 
         /// <summary>
@@ -621,8 +634,23 @@ namespace AutoFishing
             {
                 var instanceInfo = e.InstanceInfo;
                 var worldId = instanceInfo.WorldId;
-                _labelCurrentWorld.Foreground = new SolidColorBrush(
-                    worldId == WorldIds.SimpleFishingWorld || worldId == WorldIds.IdleFishing ? Colors.Green : Colors.Black);
+                var blushColor = default(Color);
+                switch (worldId)
+                {
+                    case WorldIds.SimpleFishingWorld:
+                        blushColor = Colors.Green;
+                        _minimumChargeTime = SimpleFishingWorldMinimulChargeTime;
+                        break;
+                    case WorldIds.IdleFishing:
+                        blushColor = Colors.Green;
+                        _minimumChargeTime = IdleFishingMinimulChargeTime;
+                        break;
+                    default:
+                        blushColor = Colors.Black;
+                        break;
+                }
+                _nudChargeTime.MinValue = (uint)Math.Max(_minimumChargeTime, _minimalInputInterval);
+                _labelCurrentWorld.Foreground = new SolidColorBrush(blushColor);
                 _labelCurrentWorld.Content = e.InstanceInfo.WorldName;
             });
         }

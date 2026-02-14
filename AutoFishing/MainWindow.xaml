@@ -34,7 +34,7 @@
         </Grid.ColumnDefinitions>
 
         <Label Content="Charge time:" Grid.Row="0" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UIntegerUpDown Value="500" MinValue="100" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudChargeTime_ValueChanged"/>
+        <nud:UIntegerUpDown x:Name="_nudChargeTime" Value="500" MinValue="16" MaxValue="3000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudChargeTime_ValueChanged"/>
         <Label Content="ms" Grid.Row="0" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Wait timeout:" Grid.Row="1" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
