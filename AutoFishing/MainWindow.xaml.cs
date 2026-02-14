@@ -13,6 +13,7 @@ using Koturn.Windows.GlobalHotKeys;
 using Koturn.VRChat.Log.Events;
 using AutoFishing.Enums;
 using AutoFishing.Events;
+using AutoFishing.Internals;
 
 
 namespace AutoFishing

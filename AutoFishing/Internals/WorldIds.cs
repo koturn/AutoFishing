@@ -1,4 +1,4 @@
-namespace AutoFishing
+namespace AutoFishing.Internals
 {
     /// <summary>
     /// Provides specific world IDs.
