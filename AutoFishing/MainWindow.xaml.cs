@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -198,14 +199,16 @@ namespace AutoFishing
 
                 var mreFishBite = new ManualResetEvent(false);
                 var mrePickup = new ManualResetEvent(false);
+                var sw = new Stopwatch();
                 var dataSaved = new EventHandler((_, _) =>
                 {
                     var newCount = Interlocked.Increment(ref saveDetectedCount);
-                    if (newCount == -1)
+                    if (newCount == 0)
                     {
+                        sw.Restart();
                         mrePickup.Set();
                     }
-                    else if (newCount > 0)
+                    if (sw.ElapsedMilliseconds >= 5000)
                     {
                         mreFishBite.Set();
                     }
@@ -213,13 +216,14 @@ namespace AutoFishing
                 });
                 var fishPickuped = new EventHandler((_, _) =>
                 {
-                    var newCount = Interlocked.Exchange(ref saveDetectedCount, -2);
-                    ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{newCount}]");
+                    Interlocked.Exchange(ref saveDetectedCount, -2);
+                    ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{-2}]");
                 });
                 _logWatcher.DataSaved += dataSaved;
                 _logWatcher.FishPickuped += fishPickuped;
                 try
                 {
+                    sw.Start();
                     while (true)
                     {
                         //
@@ -253,7 +257,6 @@ namespace AutoFishing
                         if (mrePickup.WaitOne(_rollTimeout))
                         {
                             ConsoleEx.Log("Put into bucket");
-                            Thread.Sleep(_minimalInputInterval);  // Wait for put into bucket.
                         }
                         else
                         {
