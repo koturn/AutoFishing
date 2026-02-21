@@ -66,9 +66,9 @@ namespace AutoFishing
         /// </summary>
         private int _minimumChargeTime = 16;
         /// <summary>
-        /// Timeout for Rolling (milliseconds).
+        /// Timeout for Reeling (milliseconds).
         /// </summary>
-        private int _rollTimeout = 20000;
+        private int _reelingTimeout = 20000;
         /// <summary>
         /// Timeout for waiting (milliseconds).
         /// </summary>
@@ -252,17 +252,17 @@ namespace AutoFishing
                         // Hold it until you reel it in.
                         //
                         updClient.Send(PressData, PressData.Length);
-                        ConsoleEx.Log($"Start reeling; Timeout=[{_rollTimeout}] ms");
+                        ConsoleEx.Log($"Start reeling; Timeout=[{_reelingTimeout}] ms");
                         _labelStatus.Dispatcher.Invoke(() => _labelStatus.Content = "Reeling");
                         mrePickup.Reset();
-                        if (mrePickup.WaitOne(_rollTimeout))
+                        if (mrePickup.WaitOne(_reelingTimeout))
                         {
                             ConsoleEx.Log("Put into bucket");
                         }
                         else
                         {
                             var newCount = Interlocked.Exchange(ref saveDetectedCount, 0);
-                            ConsoleEx.Log($"Roll timeout; saveDetectedCount=[{newCount}]");
+                            ConsoleEx.Log($"Reeling timeout; saveDetectedCount=[{newCount}]");
                         }
 
                         //
@@ -517,13 +517,13 @@ namespace AutoFishing
         }
 
         /// <summary>
-        /// Update <see cref="_rollTimeout"/>.
+        /// Update <see cref="_reelingTimeout"/>.
         /// </summary>
-        /// <param name="sender"><see cref="UIntegerUpDown"/> that manages roll time.</param>
+        /// <param name="sender"><see cref="UIntegerUpDown"/> that manages reeling time.</param>
         /// <param name="e">Provides data about a change in value to a dependency property.</param>
-        private void NudRollTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<uint> e)
+        private void NudReelingTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<uint> e)
         {
-            _rollTimeout = (int)((UIntegerUpDown)sender).Value;
+            _reelingTimeout = (int)((UIntegerUpDown)sender).Value;
         }
 
         /// <summary>

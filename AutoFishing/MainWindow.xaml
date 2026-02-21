@@ -41,8 +41,8 @@
         <nud:UIntegerUpDown Value="90000" MinValue="10000" MaxValue="300000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudWaitTimeout_ValueChanged"/>
         <Label Content="ms" Grid.Row="1" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
-        <Label Content="Roll timeout:" Grid.Row="2" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
-        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudRollTimeout_ValueChanged"/>
+        <Label Content="Reeling timeout:" Grid.Row="2" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <nud:UIntegerUpDown Value="20000" MinValue="10000" MaxValue="30000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,3" ValueChanged="NudReelingTimeout_ValueChanged"/>
         <Label Content="ms" Grid.Row="2" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
         <Label Content="Hot Key:" Grid.Row="3" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
@@ -111,11 +111,11 @@
         <Label Content="Port:" Grid.Row="7" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
         <nud:UShortUpDown x:Name="_nudPort" Value="9000" MinValue="0" MaxValue="65535" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" />
 
-        <Label Content="Input interval" Grid.Row="8" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label Content="Input interval:" Grid.Row="8" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
         <nud:UShortUpDown x:Name="_nudInputInterval" Value="33" MinValue="16" MaxValue="200" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" ValueChanged="NudInputInterval_ValueChanged"/>
         <Label Content="ms" Grid.Row="8" Grid.Column="6" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
-        <Label Content="Log Watch Cycle" Grid.Row="9" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
+        <Label Content="Log Watch Cycle:" Grid.Row="9" Grid.Column="0" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
         <nud:UShortUpDown x:Name="_nudWatchCycle" Value="1000" MinValue="500" MaxValue="2000" IsReadOnly="False" IsMouseDragEnabled="False" IsUpdateValueWhenLostFocus="True" Background="White" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="4" Margin="3,3,3,0" VerticalContentAlignment="Center" ValueChanged="NudWatchCycle_ValueChanged" />
         <Label Content="ms" Grid.Row="9" Grid.Column="5" Margin="3,3,3,3" VerticalContentAlignment="Center"/>
 
