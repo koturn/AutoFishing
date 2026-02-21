@@ -638,23 +638,24 @@ namespace AutoFishing
             {
                 var instanceInfo = e.InstanceInfo;
                 var worldId = instanceInfo.WorldId;
-                var blushColor = default(Color);
+                bool isSupportedWorld;
                 switch (worldId)
                 {
                     case WorldIds.SimpleFishingWorld:
-                        blushColor = Colors.Green;
+                        isSupportedWorld = true;
                         _minimumChargeTime = SimpleFishingWorldMinimulChargeTime;
                         break;
                     case WorldIds.IdleFishing:
-                        blushColor = Colors.Green;
+                        isSupportedWorld = true;
                         _minimumChargeTime = IdleFishingMinimulChargeTime;
                         break;
                     default:
-                        blushColor = Colors.Black;
+                        isSupportedWorld = false;
                         break;
                 }
                 _nudChargeTime.MinValue = (uint)Math.Max(_minimumChargeTime, _minimalInputInterval);
-                _labelCurrentWorld.Foreground = new SolidColorBrush(blushColor);
+                _buttonStartStop.IsEnabled = isSupportedWorld;
+                _labelCurrentWorld.Foreground = new SolidColorBrush(isSupportedWorld ? Colors.Green : Colors.Black);
                 _labelCurrentWorld.Content = e.InstanceInfo.WorldName;
             });
         }
