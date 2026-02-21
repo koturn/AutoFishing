@@ -201,7 +201,7 @@ namespace AutoFishing
                 var mreFishBite = new ManualResetEvent(false);
                 var mrePickup = new ManualResetEvent(false);
                 var sw = new Stopwatch();
-                var dataSaved = new EventHandler((_, _) =>
+                var dataSaved = new VRCLogEventHandler<VRCLogEventArgs>((_, _) =>
                 {
                     var newCount = Interlocked.Increment(ref saveDetectedCount);
                     if (newCount == 0)
@@ -215,7 +215,7 @@ namespace AutoFishing
                     }
                     ConsoleEx.Log($"Saved; saveDetectedCount=[{newCount}]");
                 });
-                var fishPickuped = new EventHandler((_, _) =>
+                var fishPickuped = new VRCLogEventHandler<VRCLogEventArgs>((_, _) =>
                 {
                     Interlocked.Exchange(ref saveDetectedCount, -2);
                     ConsoleEx.Log($"Fish Pickuped; saveDetectedCount=[{-2}]");
@@ -305,7 +305,7 @@ namespace AutoFishing
                 var updClient = (UdpClient)param!;
 
                 var mreFishBite = new ManualResetEvent(false);
-                var reelingStarted = new EventHandler((_, _) =>
+                var reelingStarted = new VRCLogEventHandler<VRCLogEventArgs>((_, _) =>
                 {
                     mreFishBite.Set();
                     ConsoleEx.Log("Reeling log detected");

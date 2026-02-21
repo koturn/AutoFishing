@@ -29,21 +29,21 @@ namespace AutoFishing
         /// <remarks>
         /// For "A Simple Fishing World".
         /// </remarks>
-        public event EventHandler? DataSaved;
+        public event VRCLogEventHandler<VRCLogEventArgs>? DataSaved;
         /// <summary>
         /// Occurs when fish pickuped.
         /// </summary>
         /// <remarks>
         /// For "A Simple Fishing World".
         /// </remarks>
-        public event EventHandler? FishPickuped;
+        public event VRCLogEventHandler<VRCLogEventArgs>? FishPickuped;
         /// <summary>
         /// <para>Occurs when fish pickuped.</para>
         /// </summary>
         /// <remarks>
         /// For "Idle Fishing".
         /// </remarks>
-        public event EventHandler? ReelingStarted;
+        public event VRCLogEventHandler<VRCLogEventArgs>? ReelingStarted;
         /// <summary>
         /// Occurs when a rod picked up.
         /// </summary>
@@ -459,7 +459,7 @@ namespace AutoFishing
                     return false;
                 }
 
-                watcher.DataSaved?.Invoke(watcher, EventArgs.Empty);
+                watcher.DataSaved?.Invoke(watcher, new VRCLogEventArgs(FileName, LogUntil));
 
                 return true;
             }
@@ -479,7 +479,7 @@ namespace AutoFishing
                     return false;
                 }
 
-                watcher.FishPickuped?.Invoke(watcher, EventArgs.Empty);
+                watcher.FishPickuped?.Invoke(watcher, new VRCLogEventArgs(FileName, LogUntil));
 
                 return true;
             }
@@ -499,7 +499,7 @@ namespace AutoFishing
                     return false;
                 }
 
-                watcher.ReelingStarted?.Invoke(watcher, EventArgs.Empty);
+                watcher.ReelingStarted?.Invoke(watcher, new VRCLogEventArgs(FileName, LogUntil));
 
                 return true;
             }
