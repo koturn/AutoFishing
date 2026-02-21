@@ -64,15 +64,15 @@ namespace AutoFishing
         /// <summary>
         /// Minimum charge time (milliseconds).
         /// </summary>
-        private int _minimumChargeTime = 16;
+        private int _minimumChargeTime = 100;
         /// <summary>
         /// Timeout for Reeling (milliseconds).
         /// </summary>
-        private int _reelingTimeout = 20000;
+        private int _reelingTimeout = 15000;
         /// <summary>
         /// Timeout for waiting (milliseconds).
         /// </summary>
-        private int _waitTimeout = 90000;
+        private int _waitTimeout = 50000;
         /// <summary>
         /// Minimal input interval (milliseconds).
         /// </summary>
@@ -209,7 +209,7 @@ namespace AutoFishing
                         sw.Restart();
                         mrePickup.Set();
                     }
-                    if (sw.ElapsedMilliseconds >= 5000)
+                    else if (sw.ElapsedMilliseconds >= 8000)
                     {
                         mreFishBite.Set();
                     }
