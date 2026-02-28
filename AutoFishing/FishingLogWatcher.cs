@@ -505,6 +505,26 @@ namespace AutoFishing
             }
 
             /// <summary>
+            /// Parse first log line as a RingManager log in "Idle Fishing".
+            /// </summary>
+            /// <param name="firstLine">First log line.</param>
+            /// <returns>True if parsed successfully, false otherwise.</returns>
+            /// <remarks>
+            /// For "Idle Fishing".
+            /// </remarks>
+            private bool ParseAsRingManagerLog(string firstLine)
+            {
+                if (!IsSubstringAt("[RingManager] ", firstLine, 13))
+                {
+                    return false;
+                }
+
+                return ParseAsRingReservedLog(firstLine)
+                    || ParseAsRingActivatedLog(firstLine)
+                    || ParseAsRingDeactivatedLog(firstLine);
+            }
+
+            /// <summary>
             /// Parse first log line as a new ring reserved log in "Idle Fishing".
             /// </summary>
             /// <param name="firstLine">First log line.</param>
@@ -514,13 +534,13 @@ namespace AutoFishing
             /// </remarks>
             private bool ParseAsRingReservedLog(string firstLine)
             {
-                if (!firstLine.StartsWith("Reserving ring ", StringComparison.Ordinal))
+                if (!IsSubstringAt("Reserving ring ", firstLine, 27))
                 {
                     return false;
                 }
 
 #if NET9_0_OR_GREATER
-                var tokenSpan = firstLine.AsSpan(15);
+                var tokenSpan = firstLine.AsSpan(42);
                 var numberTokenEnumerator = tokenSpan.Split(' ');
 
                 numberTokenEnumerator.MoveNext();
@@ -532,7 +552,7 @@ namespace AutoFishing
                 numberTokenEnumerator.MoveNext();
                 var ringIndex = int.Parse(tokenSpan[numberTokenEnumerator.Current]);
 #else
-                var numberTokens = firstLine.Substring(15).Split(' ');
+                var numberTokens = firstLine.Substring(42).Split(' ');
                 var ringPosition = int.Parse(numberTokens[0]);
                 var ringKind = (RingKind)int.Parse(numberTokens[1]);
                 var ringIndex = int.Parse(numberTokens[2]);
@@ -555,15 +575,15 @@ namespace AutoFishing
             /// </remarks>
             private bool ParseAsRingActivatedLog(string firstLine)
             {
-                if (!firstLine.StartsWith("Activate Ring ", StringComparison.Ordinal))
+                if (!IsSubstringAt("Activate Ring ", firstLine, 27))
                 {
                     return false;
                 }
 
 #if NET7_0_OR_GREATER
-                if (int.TryParse(firstLine.AsSpan(14), out int ringIndex))
+                if (int.TryParse(firstLine.AsSpan(41), out int ringIndex))
 #else
-                if (int.TryParse(firstLine.Substring(14), out int ringIndex))
+                if (int.TryParse(firstLine.Substring(41), out int ringIndex))
 #endif  // NET7_0_OR_GREATER
                 {
                     var e = _idleFishingRingEventArgArray[ringIndex];
@@ -587,15 +607,15 @@ namespace AutoFishing
             /// </remarks>
             private bool ParseAsRingDeactivatedLog(string firstLine)
             {
-                if (!firstLine.StartsWith("Deactivate Ring ", StringComparison.Ordinal))
+                if (!IsSubstringAt("Deactivate Ring ", firstLine, 27))
                 {
                     return false;
                 }
 
 #if NET7_0_OR_GREATER
-                if (int.TryParse(firstLine.AsSpan(16), out int ringIndex))
+                if (int.TryParse(firstLine.AsSpan(43), out int ringIndex))
 #else
-                if (int.TryParse(firstLine.Substring(16), out int ringIndex))
+                if (int.TryParse(firstLine.Substring(43), out int ringIndex))
 #endif  // NET7_0_OR_GREATER
                 {
                     var e = _idleFishingRingEventArgArray[ringIndex];
@@ -632,10 +652,17 @@ namespace AutoFishing
             /// <returns>True if parsed successfully, false otherwise.</returns>
             private static bool ParseAsIdleFishingLog(FishingLogParser parser, FishingLogWatcher watcher, string firstLine)
             {
-                return parser.ParseAsReelingStartedLog(firstLine)
-                    || parser.ParseAsRingReservedLog(firstLine)
-                    || parser.ParseAsRingActivatedLog(firstLine)
-                    || parser.ParseAsRingDeactivatedLog(firstLine);
+                if (parser.ParseAsReelingStartedLog(firstLine))
+                {
+                    return true;
+                }
+
+                if (!firstLine.StartsWith("[IdleFishing]", StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                return parser.ParseAsRingManagerLog(firstLine);
             }
         }
     }
